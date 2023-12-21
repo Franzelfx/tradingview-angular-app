@@ -2,12 +2,12 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-
+import { environment as env } from '../environments/environment';
 @Injectable({
   providedIn: 'root',
 })
 export class ChartDataService {
-  private apiUrl = 'http://127.0.0.1:8000/v1';
+  private apiUrl = env.apiUrl;
 
   constructor(private http: HttpClient) {}
 
