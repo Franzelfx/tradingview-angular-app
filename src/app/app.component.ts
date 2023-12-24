@@ -54,7 +54,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     console.log(this.pairs);
     this.pairs.forEach((pair) => {
       console.log(pair);
-      this.chartDataService.getModelBars(pair, 500).subscribe((data: any) => {
+      this.chartDataService.getModelBars(pair, 2000).subscribe((data: any) => {
         if (Array.isArray(data)) {
           this.createChart(pair, data);
         }
