@@ -50,6 +50,22 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
 
+  // Add this method in the AppComponent class
+  fetchNewData(): void {
+    this.chartDataService.getChartDumps().subscribe(
+      (dumps: any) => {
+        this.pairs = dumps.map((dump: string) => this.cleanPair(dump));
+        // Reset existing data
+        this.confidences = {};
+        this.lastTimestamps = {};
+        this.loadCharts(); // Load charts with new data
+      },
+      (error) => {
+        console.error('Error fetching new chart dumps:', error);
+      }
+    );
+  }
+
   loadCharts(): void {
     console.log(this.pairs);
     this.pairs.forEach((pair) => {

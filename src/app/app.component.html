@@ -1,3 +1,5 @@
+<!-- Add a button to fetch new data -->
+<button (click)="fetchNewData()">Fetch New Data</button>
 <div class="chart-grid">
   <div *ngFor="let pair of pairs" class="chart-container" id="{{pair}}">
     <!-- Display the pair, its confidence value, and the last timestamp -->
