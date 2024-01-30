@@ -180,6 +180,7 @@ export class AppComponent implements OnInit, AfterViewInit {
           predictionData.map((d) => ({
             time: d.time,
             value: d.close, // or the appropriate property
+            lineType: LightweightCharts.LineType.WithSteps,
           }))
         );
       }
