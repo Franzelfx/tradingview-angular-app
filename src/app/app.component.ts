@@ -1,7 +1,10 @@
+import { map } from 'rxjs/operators';
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { ChartDataService } from './chart-data.service';
 import * as LightweightCharts from 'lightweight-charts';
-import { SeriesMarker, SeriesMarkerShape, SeriesMarkerPosition } from 'lightweight-charts';
+import { SeriesMarker } from 'lightweight-charts';
+// import time from lightweight-charts
+import { Time } from 'lightweight-charts';
 
 @Component({
   selector: 'app-root',
@@ -202,11 +205,10 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.chartDataService.getConfidences(pair).subscribe((confidenceData) => {
       if (Array.isArray(confidenceData) && confidenceData.length > 0) {
         // Just declare markers without specifying <Time>
-        const markers: SeriesMarker<number>[] = confidenceData.map(confidence => {
-          // Assuming confidence.t is a Unix timestamp in seconds
-          const unixTimestamp = Math.floor(new Date(confidence.t).getTime() / 1000);
+        const markers: SeriesMarker<Time>[] = confidenceData.map(confidence => {
+          const time = confidence.time;
           return {
-            time: unixTimestamp,
+            time: time,
             position: 'aboveBar',
             color: 'orange',
             shape: 'circle',
