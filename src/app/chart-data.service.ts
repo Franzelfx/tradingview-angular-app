@@ -19,6 +19,10 @@ export class ChartDataService {
     return this.http.get(`${this.apiUrl}/confidence/${pair}`);
   }
 
+  getConfidences(pair: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/confidences/${pair}`);
+  }
+
   getModelBars(pair: string, limit: number): Observable<any> {
     return this.http
       .get(`${this.apiUrl}/bars/${pair}/${limit}`)

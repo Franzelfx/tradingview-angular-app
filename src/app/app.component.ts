@@ -1,12 +1,14 @@
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { ChartDataService } from './chart-data.service';
 import * as LightweightCharts from 'lightweight-charts';
+import { SeriesMarker, SeriesMarkerShape, SeriesMarkerPosition } from 'lightweight-charts';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
 })
+
 export class AppComponent implements OnInit, AfterViewInit {
   pairs: string[] = [];
   confidences: { [key: string]: string } = {}; // Object to hold confidence values
@@ -84,6 +86,17 @@ export class AppComponent implements OnInit, AfterViewInit {
       return ''; // Return an empty string or handle it as you see fit
     }
     return pair.replace(/[^a-zA-Z0-9]/g, '');
+  }
+
+  formatDateToDDMMYYYYHHMM(date: any) {
+    const day = ('0' + date.getDate()).slice(-2); // Add leading zero if needed
+    const month = ('0' + (date.getMonth() + 1)).slice(-2); // Months are 0-indexed
+    const year = date.getFullYear();
+    const hours = ('0' + date.getHours()).slice(-2);
+    const minutes = ('0' + date.getMinutes()).slice(-2);
+
+    // Formatting the date string as "dd-mm-yyyy hh:mm"
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
   }
 
   createChart(pair: string, data: any[]): void {
@@ -172,17 +185,36 @@ export class AppComponent implements OnInit, AfterViewInit {
       color: 'rgba(0, 150, 136, 1)',
       lineWidth: 2,
     });
-
     // Fetch and set data for the line series
     this.chartDataService.getPrediction(pair).subscribe((predictionData) => {
       if (Array.isArray(predictionData)) {
         lineSeries.setData(
-          predictionData.map((d) => ({
-            time: d.time,
-            value: d.close, // or the appropriate property
-            lineType: LightweightCharts.LineType.WithSteps,
-          }))
+          predictionData.map((d) => {
+            return {
+              time: d.time,
+              value: d.close, // or the appropriate property
+              lineType: LightweightCharts.LineType.WithSteps,
+            };
+          })
         );
+      }
+    });
+    this.chartDataService.getConfidences(pair).subscribe((confidenceData) => {
+      if (Array.isArray(confidenceData) && confidenceData.length > 0) {
+        // Just declare markers without specifying <Time>
+        const markers: SeriesMarker<number>[] = confidenceData.map(confidence => {
+          // Assuming confidence.t is a Unix timestamp in seconds
+          const unixTimestamp = Math.floor(new Date(confidence.t).getTime() / 1000);
+          return {
+            time: unixTimestamp,
+            position: 'aboveBar',
+            color: 'orange',
+            shape: 'circle',
+            text: 'Your label here', // Customize as needed
+          };
+        });
+      // Directly set markers without casting
+      candleSeries.setMarkers(markers);
       }
     });
   }
