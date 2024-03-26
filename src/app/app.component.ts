@@ -5,6 +5,9 @@ import * as LightweightCharts from 'lightweight-charts';
 import { SeriesMarker } from 'lightweight-charts';
 // import time from lightweight-charts
 import { Time } from 'lightweight-charts';
+import { HostListener } from '@angular/core';
+import { Subject } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -18,8 +21,32 @@ export class AppComponent implements OnInit, AfterViewInit {
   lastTimestamps: { [key: string]: string } = {}; // Object to hold the last timestamp for each pair
   dataLoaded = false; // Flag to check if data is loaded
   isDarkModeEnabled = true;
+  selectedPair: string = "";
+  chart: LightweightCharts.IChartApi | null = null;
+  private resizeSubject: Subject<void> = new Subject();
+  private candleSeries: LightweightCharts.ISeriesApi<'Candlestick'> | null = null;
+  private lineSeries: LightweightCharts.ISeriesApi<'Line'> | null = null;
 
-  constructor(private chartDataService: ChartDataService) {}
+  constructor(private chartDataService: ChartDataService) {
+  this.resizeSubject.pipe(debounceTime(100)).subscribe(() => {
+    this.adjustChartSize();
+  });
+}
+
+
+  @HostListener('window:resize')
+  onResize() {
+    this.adjustChartSize();
+  }
+
+  adjustChartSize(): void {
+    const chartContainer = document.getElementById('chartContainer');
+    if (chartContainer && this.chart) {
+      // Directly adjust the chart size without additional DOM manipulations
+      this.chart.resize(chartContainer.clientWidth, 400); // Keep a fixed height or adjust as needed
+    }
+  }
+
 
   ngOnInit(): void {
     this.chartDataService.getChartDumps().subscribe(
@@ -71,16 +98,31 @@ export class AppComponent implements OnInit, AfterViewInit {
     );
   }
 
+  selectPair(pair: string): void {
+    this.selectedPair = pair;
+    // Assuming loadCharts can now handle loading a single chart,
+    // modify it accordingly if needed.
+    this.loadCharts();
+  }
+
   loadCharts(): void {
-    console.log(this.pairs);
+    // Adjust this method to either load all charts or just the one for selectedPair
+    if (this.selectedPair != "") {
+      // Load chart only for the selected pair
+      this.chartDataService.getModelBars(this.selectedPair, 2000).subscribe((data: any) => {
+        if (Array.isArray(data)) {
+          this.createChart(this.selectedPair, data);
+        }
+      });
+    } else {
     this.pairs.forEach((pair) => {
-      console.log(pair);
       this.chartDataService.getModelBars(pair, 2000).subscribe((data: any) => {
         if (Array.isArray(data)) {
           this.createChart(pair, data);
         }
       });
     });
+  }
   }
 
   cleanPair(pair: string): string {
@@ -102,63 +144,52 @@ export class AppComponent implements OnInit, AfterViewInit {
     return `${day}-${month}-${year} ${hours}:${minutes}`;
   }
 
-  createChart(pair: string, data: any[]): void {
-    const chartContainer = document.getElementById(pair);
+createChart(pair: string, data: any[]): void {
+    const chartContainer = document.getElementById('chartContainer');
+    // Clear the old chart before creating a new one
+    if (this.chart) {
+      this.chart.remove();
+      this.chart = null;
+    }
     if (!chartContainer) return;
-
+    if (!this.chart) {
+      this.chart = LightweightCharts.createChart(chartContainer, {
+        width: chartContainer.clientWidth,
+        height: 400,
+        layout: {
+          background: {
+            type: LightweightCharts.ColorType.Solid,
+            color: this.isDarkModeEnabled ? '#131722' : '#ffffff',
+          },
+          textColor: this.isDarkModeEnabled ? '#D9D9D9' : '#191919',
+        },
+        grid: {
+          vertLines: { color: 'rgba(197, 203, 206, 0.5)' },
+          horzLines: { color: 'rgba(197, 203, 206, 0.5)' },
+        },
+        crosshair: {
+          mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        rightPriceScale: {
+          borderColor: 'rgba(197, 203, 206, 0.8)',
+        },
+        timeScale: {
+          borderColor: 'rgba(197, 203, 206, 0.8)',
+          timeVisible: true,
+        },
+      });
+    }
+    
+    // Assuming data is sorted and the last element is the latest
     if (data && data.length > 0) {
-      const lastDataPoint = data[data.length - 1];
-      // Create a Date object from the timestamp
-      const utcDate = new Date(lastDataPoint.time * 1000);
-
-      // Calculate the local time zone offset and adjust the date
-      const localDate = new Date(
-        utcDate.getTime() + utcDate.getTimezoneOffset() * 60000
-      ); // UTC+1
-
-      // Format the date to dd-mm-yyyy hh:mm
-      const formattedDate =
-        [
-          ('0' + localDate.getDate()).slice(-2),
-          ('0' + (localDate.getMonth() + 1)).slice(-2),
-          localDate.getFullYear(),
-        ].join('-') +
-        ' ' +
-        [
-          ('0' + localDate.getHours()).slice(-2),
-          ('0' + localDate.getMinutes()).slice(-2),
-        ].join(':');
-
-      this.lastTimestamps[pair] = formattedDate;
+        const lastData = data[data.length - 1];
+        // Extract the last timestamp from the data
+        const lastTimestamp = this.formatDateToDDMMYYYYHHMM(new Date(lastData.time * 1000));
+        this.lastTimestamps[pair] = lastTimestamp;
     }
 
-    const chart = LightweightCharts.createChart(chartContainer, {
-      width: chartContainer.clientWidth,
-      height: 400,
-      layout: {
-        background: {
-          type: LightweightCharts.ColorType.Solid,
-          color: this.isDarkModeEnabled ? '#131722' : '#ffffff',
-        },
-        textColor: this.isDarkModeEnabled ? '#D9D9D9' : '#191919',
-      },
-      grid: {
-        vertLines: { color: 'rgba(197, 203, 206, 0.5)' },
-        horzLines: { color: 'rgba(197, 203, 206, 0.5)' },
-      },
-      crosshair: {
-        mode: LightweightCharts.CrosshairMode.Normal,
-      },
-      rightPriceScale: {
-        borderColor: 'rgba(197, 203, 206, 0.8)',
-      },
-      timeScale: {
-        borderColor: 'rgba(197, 203, 206, 0.8)',
-        timeVisible: true,
-      },
-    });
-
-    var candleSeries = chart.addCandlestickSeries({
+    // Check if candleSeries and lineSeries are null before creating new ones
+    this.candleSeries = this.chart.addCandlestickSeries({
       upColor: 'rgba(0, 255, 255, 1)',
       downColor: 'rgba(255, 0, 0, 1)',
       borderDownColor: 'rgba(255, 0, 0, 1)',
@@ -171,55 +202,51 @@ export class AppComponent implements OnInit, AfterViewInit {
       },
     });
 
-    candleSeries.setData(
-      data.map((d) => {
-        return {
-          time: d.time,
-          open: d.open,
-          high: d.high,
-          low: d.low,
-          close: d.close,
-        };
-      })
+    this.candleSeries.setData(
+      data.map(d => ({
+        time: d.time,
+        open: d.open,
+        high: d.high,
+        low: d.low,
+        close: d.close,
+      }))
     );
 
-    // Create a line series for the prediction data
-    var lineSeries = chart.addLineSeries({
+    this.lineSeries = this.chart.addLineSeries({
       color: 'rgba(0, 150, 136, 1)',
       lineWidth: 2,
     });
-    // Fetch and set data for the line series
-    this.chartDataService.getPrediction(pair).subscribe((predictionData) => {
+
+    // This assumes you've ensured the data for predictions is loaded
+    this.chartDataService.getPrediction(pair).subscribe(predictionData => {
       if (Array.isArray(predictionData)) {
-        lineSeries.setData(
-          predictionData.map((d) => {
-            return {
-              time: d.time,
-              value: d.close, // or the appropriate property
-              lineType: LightweightCharts.LineType.WithSteps,
-            };
-          })
+        if(this.lineSeries)
+        this.lineSeries.setData(
+          predictionData.map(d => ({
+            time: d.time,
+            value: d.close,
+          }))
         );
       }
     });
-    this.chartDataService.getConfidences(pair).subscribe((confidenceData) => {
+
+    this.chartDataService.getConfidences(pair).subscribe(confidenceData => {
       if (Array.isArray(confidenceData) && confidenceData.length > 0) {
-        // Just declare markers without specifying <Time>
-        const markers: SeriesMarker<Time>[] = confidenceData.map(confidence => {
-          const time = confidence.time;
-          return {
-            time: time,
-            position: 'aboveBar',
-            color: 'orange',
-            shape: 'circle',
-            text: 'Your label here', // Customize as needed
-          };
-        });
-      // Directly set markers without casting
-      candleSeries.setMarkers(markers);
+        const markers: SeriesMarker<Time>[] = confidenceData.map(confidence => ({
+          time: confidence.t,
+          position: 'aboveBar',
+          color: 'white',
+          shape: 'arrowDown',
+          text: confidence.value,
+        }));
+
+        // Ensure candleSeries is not null before setting markers
+        if (this.candleSeries)
+        this.candleSeries.setMarkers(markers);
       }
     });
-  }
+}
+
 
   toggleDarkMode(): void {
     this.isDarkModeEnabled = !this.isDarkModeEnabled;

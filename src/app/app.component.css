@@ -1,73 +1,50 @@
-/* Update chart container styles for dark mode */
-/* Update chart container styles for dark mode */
-.chart-container {
-  background-color: #1f1f1f;
-  /* Dark background for the chart container */
-  border: 3px solid #ddd;
-  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-  width: 95%;
+/* Sidebar styles */
+.sidebar {
+  height: 100vh;
+  width: 150px;
+  /* Sidebar width */
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #111;
+  /* Dark background for better contrast */
+  color: white;
+  /* Light text for readability */
+  overflow-x: hidden;
+  padding-top: 20px;
 }
 
-.chart-container h3 {
-  color: #fff;
-  /* White color for h3 tags */
-  margin: 5px 0;
-  /* Vertical spacing */
-  padding: 2px 0 2px 15px;
-  /* Padding */
-  font-family: 'Fira Code', monospace;
-  /* Fira Code font */
-  width: auto;
+.pair-selector {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  /* Smooth transition for hover effect */
 }
 
-.chart-container h4 {
-    color: #fff;
-    /* White color for h3 tags */
-    margin: 5px 0;
-    /* Vertical spacing */
-    padding: 2px 0 2px 15px;
-    /* Padding */
-    font-family: 'Fira Code',
-    monospace;
-    /* Fira Code font */
-    width: auto;
-    }
-
-.chart-grid {
-  stroke: #444;
-  background-color: #1f1f1f;
-  width: auto;
-  /* Dark background for the chart grid */
+.pair-selector:hover {
+  background-color: #575757;
 }
 
-/* Styles for the scrollbar */
-::-webkit-scrollbar {
-  width: 15px;
-  /* Adjust the width of the scrollbar */
-  height: 15px;
-  /* Adjust the height (for horizontal scrollbars) */
+/* Adjust the main content area */
+.main-content {
+  margin-left: 150px;
+  /* Same as sidebar width */
+  padding: 20px;
 }
 
-/* Styles for the scrollbar track (part that the thumb moves along) */
-::-webkit-scrollbar-track {
-  background: #2e2e2e;
-  /* A darker track color */
-  border-radius: 10px;
-  /* Optional: to make the track corners rounded */
+.metadata-container {
+  margin-bottom: 0px; /* Eliminate bottom margin */
+  padding-bottom: 0px; /* Eliminate bottom padding */
 }
 
-/* Styles for the scrollbar thumb (the part that you drag) */
-::-webkit-scrollbar-thumb {
-  background: #555;
-  /* A lighter thumb color */
-  border-radius: 10px;
-  /* Rounded corners on the thumb */
-  border: 3px solid #2e2e2e;
-  /* Optional: adds a border around the thumb */
+#chartContainer {
+  margin-top: 0px; /* Eliminate top margin */
+  /* Ensure there's no unnecessary height */
+  height: 600px; /* Adjust this based on your desired chart height */
 }
 
-/* Styles for when the scrollbar thumb is hovered */
-::-webkit-scrollbar-thumb:hover {
-  background: #888;
-  /* A lighter color when hovered */
-}
+
+/* You might need to adjust the chart creation logic to handle resizing */
