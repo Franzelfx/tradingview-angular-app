@@ -1,16 +1,45 @@
+<!-- src/app/app.component.html -->
+
+<!-- Header with toggle buttons and selected pair info -->
+<div class="header">
+  <!-- Sidebar Toggle Button -->
+  <button (click)="toggleSidebar()" class="icon-button" aria-label="Toggle Sidebar">
+    <i
+      class="fas"
+      [ngClass]="isSidebarVisible ? 'fa-chevron-left' : 'fa-chevron-right'"
+    ></i>
+  </button>
+
+  <!-- Selected Pair Info -->
+  <div class="selected-pair-info" *ngIf="selectedPair">
+    <span class="pair-name">{{ selectedPair }}</span>
+    <span class="pair-timestamp">{{ lastTimestamps[selectedPair] }}</span>
+  </div>
+
+  <!-- Dark Mode Toggle Switch -->
+  <div class="switch-container">
+    <label class="switch">
+      <input
+        type="checkbox"
+        [(ngModel)]="isDarkMode"
+        (ngModelChange)="toggleDarkMode($event)"
+        aria-label="Toggle Dark Mode"
+      />
+      <span class="slider round"></span>
+    </label>
+  </div>
+</div>
+
 <!-- Sidebar for selecting pairs -->
-<div class="sidebar">
+<div class="sidebar" [class.hidden]="!isSidebarVisible">
   <div *ngFor="let pair of pairs" (click)="selectPair(pair)" class="pair-selector">
-    {{pair}}
+    {{ pair }}
   </div>
 </div>
 
 <!-- Container for the selected pair's metadata and chart -->
-<div class="main-content" *ngIf="selectedPair">
-  <div class="metadata-container">
-    <h3>{{selectedPair}} - Confidence: {{confidences[selectedPair]}}</h3>
-    <h4>Last Timestamp: {{lastTimestamps[selectedPair]}}</h4>
-  </div>
+<div class="main-content" [ngClass]="{'full-width': !isSidebarVisible}" *ngIf="selectedPair">
+  <div class="metadata-container"></div>
   <!-- Dedicated container for the chart -->
   <div id="chartContainer"></div>
 </div>

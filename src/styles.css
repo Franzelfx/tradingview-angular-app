@@ -1,1 +1,361 @@
-/* You can add global styles to this file, and also import other style files */
+/* src/styles.css */
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+/* Define CSS Variables for Light and Dark Themes */
+:root {
+    /* Light Theme Colors */
+    --color-background: #f5f5f5;
+    --color-text: #333333;
+    --color-header-bg: #f5f5f5;
+    --color-header-text: #333333;
+    --color-sidebar-bg: #f0f0f0;
+    --color-sidebar-text: #333333;
+    --color-sidebar-hover: #ddd;
+    --color-main-bg: #ffffff;
+    --color-main-text: #333333;
+    --color-chart-bg: #fafafa;
+    --color-chart-border: #ccc;
+    --color-button-hover: #4caf50;
+    /* Sidebar Width Variables */
+    --sidebar-width: 150px;
+    /* Reduced from 200px */
+    --sidebar-width-medium: 130px;
+    /* Reduced from 180px */
+    --sidebar-width-small: 100px;
+    /* Reduced from 150px */
+}
+
+body.dark-mode {
+    /* Dark Theme Colors */
+    --color-background: #121212;
+    --color-text: #e0e0e0;
+    --color-header-bg: #2c2c2c;
+    --color-header-text: #e0e0e0;
+    --color-sidebar-bg: #3c3c3c;
+    --color-sidebar-text: #e0e0e0;
+    --color-sidebar-hover: #555;
+    --color-main-bg: #1e1e1e;
+    --color-main-text: #e0e0e0;
+    --color-chart-bg: #2c2c2c;
+    --color-chart-border: #555;
+    --color-button-hover: #4caf50;
+    /* Sidebar Width Variables for Dark Mode */
+    --sidebar-width: 150px;
+    /* Ensure consistency with light mode */
+    --sidebar-width-medium: 130px;
+    --sidebar-width-small: 100px;
+}
+
+/* Global Styles */
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: var(--color-background);
+    color: var(--color-text);
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Header Styles */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* Center vertically */
+    padding: 10px 20px;
+    background-color: var(--color-header-bg);
+    color: var(--color-header-text);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    /* Fixed height */
+    z-index: 1000;
+    /* Stay above other elements */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* Subtle shadow */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body.dark-mode .header {
+    background-color: var(--color-header-bg);
+    color: var(--color-header-text);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    /* Darker shadow */
+}
+
+/* Icon Button Styles */
+.icon-button {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: inherit;
+    /* Inherit color based on theme */
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.icon-button i {
+    transition: transform 0.3s ease;
+}
+
+.icon-button:hover i {
+    transform: scale(1.2);
+}
+
+/* Selected Pair Info */
+.selected-pair-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.pair-name {
+    font-weight: 500;
+    font-size: 16px;
+}
+
+.pair-timestamp {
+    font-size: 12px;
+    color: #777;
+    transition: color 0.3s ease;
+}
+
+body.dark-mode .pair-timestamp {
+    color: #bbb;
+}
+
+/* Switch Container */
+.switch-container {
+    display: flex;
+    align-items: center;
+}
+
+/* iOS-style Switch */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* Slider */
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.4s;
+    border-radius: 28px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 22px;
+    width: 22px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.4s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: var(--color-button-hover);
+}
+
+input:focus+.slider {
+    box-shadow: 0 0 1px var(--color-button-hover);
+}
+
+input:checked+.slider:before {
+    transform: translateX(22px);
+}
+
+/* Sidebar Styles */
+.sidebar {
+    height: calc(100vh - 60px);
+    /* Adjust based on header height */
+    width: var(--sidebar-width);
+    /* Use CSS variable */
+    position: fixed;
+    top: 60px;
+    /* Below the header */
+    left: 0;
+    background-color: var(--color-sidebar-bg);
+    color: var(--color-sidebar-text);
+    padding-top: 20px;
+    transition: width 0.3s ease, background-color 0.3s ease, color 0.3s ease;
+    overflow: hidden;
+    /* Hide content when collapsed */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    /* Subtle shadow */
+}
+
+body.dark-mode .sidebar {
+    background-color: var(--color-sidebar-bg);
+    color: var(--color-sidebar-text);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+    /* Darker shadow */
+}
+
+.sidebar.hidden {
+    width: 0;
+    padding: 20px 0;
+    /* Adjust padding when collapsed */
+}
+
+/* Pair Selector Styles */
+.pair-selector {
+    padding: 15px 20px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.pair-selector:hover {
+    background-color: var(--color-sidebar-hover);
+}
+
+body.dark-mode .pair-selector:hover {
+    background-color: var(--color-sidebar-hover);
+}
+
+/* Main Content Styles */
+.main-content {
+    margin-top: 60px;
+    /* Below the header */
+    margin-left: var(--sidebar-width);
+    /* Use CSS variable */
+    padding: 20px;
+    transition: margin-left 0.3s ease, background-color 0.3s ease;
+    background-color: var(--color-main-bg);
+    color: var(--color-main-text);
+    min-height: calc(100vh - 60px);
+
+    /* Entferne Flexbox, da wir eine feste Höhe verwenden */
+    /* display: flex;
+    flex-direction: column; */
+}
+
+body.dark-mode .main-content {
+    background-color: var(--color-main-bg);
+}
+
+.main-content.full-width {
+    margin-left: 0;
+}
+
+/* Metadata Container */
+.metadata-container {
+    margin-bottom: 20px;
+    color: inherit;
+}
+
+.metadata-container h3,
+.metadata-container h4 {
+    margin: 0;
+}
+
+body.dark-mode .metadata-container h3,
+body.dark-mode .metadata-container h4 {
+    color: #e0e0e0;
+}
+
+/* Chart Container */
+#chartContainer {
+    /* Setze eine feste Höhe, z.B. 300px */
+    height: 300px;
+    /* Anpassen nach Bedarf */
+    background-color: var(--color-chart-bg);
+    border: 1px solid var(--color-chart-border);
+    border-radius: 4px;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Responsive Design */
+
+/* Tablets and Medium Screens */
+@media (max-width: 1024px) {
+    :root {
+        --sidebar-width: var(--sidebar-width-medium);
+        /* 130px */
+    }
+
+    .main-content {
+        margin-left: var(--sidebar-width-medium);
+    }
+}
+
+/* Small Tablets and Large Phones */
+@media (max-width: 768px) {
+    :root {
+        --sidebar-width: var(--sidebar-width-small);
+        /* 100px */
+    }
+
+    .main-content {
+        margin-left: var(--sidebar-width-small);
+    }
+}
+
+/* Mobile Devices */
+@media (max-width: 480px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        height: auto;
+        padding: 10px;
+    }
+
+    .selected-pair-info {
+        margin-top: 10px;
+        align-items: flex-start;
+    }
+
+    .switch-container {
+        margin-top: 10px;
+        align-self: flex-end;
+    }
+
+    .sidebar {
+        width: 0;
+        padding: 20px 0;
+    }
+
+    .sidebar.hidden {
+        width: 0;
+        padding: 20px 0;
+    }
+
+    .main-content {
+        margin-left: 0;
+    }
+}
+
+/* Optional: Transition for smooth theme and layout changes */
+body,
+.header,
+.sidebar,
+.main-content,
+#chartContainer,
+.pair-selector,
+.metadata-container h3,
+.metadata-container h4 {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}

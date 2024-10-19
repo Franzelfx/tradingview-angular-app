@@ -1,50 +1,18 @@
-/* Sidebar styles */
-.sidebar {
-  height: 100vh;
-  width: 150px;
-  /* Sidebar width */
-  position: fixed;
-  z-index: 1;
-  top: 0;
-  left: 0;
-  background-color: #111;
-  /* Dark background for better contrast */
+/* src/app/app.component.css */
+
+/* Example: Styles unique to AppComponent */
+
+.unique-button {
+  background-color: var(--color-button-hover);
+  border: none;
+  padding: 10px 20px;
   color: white;
-  /* Light text for readability */
-  overflow-x: hidden;
-  padding-top: 20px;
-}
-
-.pair-selector {
-  padding: 10px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
   cursor: pointer;
-  transition: background-color 0.3s;
-  /* Smooth transition for hover effect */
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
 }
 
-.pair-selector:hover {
-  background-color: #575757;
+.unique-button:hover {
+  background-color: #45a049;
+  /* Or use a CSS variable if preferred */
 }
-
-/* Adjust the main content area */
-.main-content {
-  margin-left: 150px;
-  /* Same as sidebar width */
-  padding: 20px;
-}
-
-.metadata-container {
-  margin-bottom: 0px; /* Eliminate bottom margin */
-  padding-bottom: 0px; /* Eliminate bottom padding */
-}
-
-#chartContainer {
-  margin-top: 0px; /* Eliminate top margin */
-  /* Ensure there's no unnecessary height */
-  height: 600px; /* Adjust this based on your desired chart height */
-}
-
-
-/* You might need to adjust the chart creation logic to handle resizing */
