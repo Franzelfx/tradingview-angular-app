@@ -1,23 +1,22 @@
 <!-- src/app/app.component.html -->
 
-<!-- Header mit Toggle-Buttons und Zeitstempel der ausgewählten Paare -->
+<!-- Header with Sidebar Toggle, Logo, and Dark Mode Toggle -->
 <div class="header">
-  <!-- Sidebar Toggle Button -->
+  <!-- Sidebar Toggle Button (Arrow on the Left) -->
   <button (click)="toggleSidebar()" class="icon-button" aria-label="Toggle Sidebar">
     <i
       class="fas"
       [ngClass]="isSidebarVisible ? 'fa-chevron-left' : 'fa-chevron-right'"
+      aria-hidden="true"
     ></i>
   </button>
 
-  <!-- Zeitstempel der ausgewählten Paare -->
-  <div class="selected-pair-info" *ngIf="selectedPairs.length > 0">
-    <div *ngFor="let pair of selectedPairs" class="selected-pair">
-      <span class="pair-timestamp">{{ lastTimestamps[pair] }}</span>
-    </div>
+  <!-- Logo in the Center -->
+  <div class="logo-container">
+    <img src="assets/logo.svg" alt="Logo" class="logo">
   </div>
 
-  <!-- Dark Mode Toggle Switch -->
+  <!-- Dark Mode Toggle Switch on the Right -->
   <div class="switch-container">
     <label class="switch">
       <input
@@ -31,7 +30,7 @@
   </div>
 </div>
 
-<!-- Sidebar mit dynamischer Klassenbindung -->
+<!-- Sidebar with Dynamic Class Binding -->
 <div class="sidebar" [ngClass]="{'hidden': !isSidebarVisible}">
   <div 
     *ngFor="let pair of pairs" 
@@ -44,8 +43,8 @@
   </div>
 </div>
 
-<!-- Main Content mit dynamischer Klassenbindung -->
+<!-- Main Content with Dynamic Class Binding -->
 <div class="main-content" [ngClass]="{'full-width': !isSidebarVisible}">
-  <!-- Dynamisch hinzugefügte Chart-Container -->
-  <!-- Diese werden von TypeScript dynamisch erstellt -->
+  <!-- Dynamically Added Chart Containers -->
+  <!-- These are created dynamically by TypeScript -->
 </div>

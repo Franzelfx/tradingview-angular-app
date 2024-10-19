@@ -16,21 +16,21 @@ import { debounceTime } from 'rxjs/operators';
 
 export class AppComponent implements OnInit, AfterViewInit {
   pairs: string[] = [];
-  confidences: { [key: string]: string } = {}; // Objekt zur Speicherung der Confidence-Werte
-  lastTimestamps: { [key: string]: string } = {}; // Objekt zur Speicherung der letzten Zeitstempel
+  confidences: { [key: string]: string } = {}; // Object to store confidence values
+  lastTimestamps: { [key: string]: string } = {}; // Object to store last timestamps
   isDarkMode: boolean = false;
-  isSidebarVisible: boolean = true; // Sidebar-Sichtbarkeitsstatus
-  dataLoaded: boolean = false; // Flag zum Überprüfen, ob Daten geladen sind
-  selectedPairs: string[] = []; // Mehrere ausgewählte Paare
-  charts: { [key: string]: LightweightCharts.IChartApi } = {}; // Mehrere Charts
+  isSidebarVisible: boolean = true; // Sidebar visibility status
+  dataLoaded: boolean = false; // Flag to check if data is loaded
+  selectedPairs: string[] = []; // Multiple selected pairs
+  charts: { [key: string]: LightweightCharts.IChartApi } = {}; // Multiple charts
   candleSeriesMap: { [key: string]: LightweightCharts.ISeriesApi<'Candlestick'> } = {};
   lineSeriesMap: { [key: string]: LightweightCharts.ISeriesApi<'Line'> } = {};
-  dataLoading: boolean = false; // Flag zum Überprüfen, ob Daten geladen werden
+  dataLoading: boolean = false; // Flag to check if data is loading
   private resizeSubject: Subject<void> = new Subject();
 
   constructor(
     private chartDataService: ChartDataService,
-    private renderer: Renderer2 // Renderer2 für DOM-Manipulation
+    private renderer: Renderer2 // Renderer2 for DOM manipulation
   ) {
     this.resizeSubject.pipe(debounceTime(100)).subscribe(() => {
       this.adjustChartSizes();
@@ -52,14 +52,14 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {
-    // Theme aus localStorage abrufen
+    // Retrieve theme from localStorage
     const savedTheme = localStorage.getItem('theme');
     if (savedTheme === 'dark') {
       this.isDarkMode = true;
       this.renderer.addClass(document.body, 'dark-mode');
     }
 
-    // Ausgewählte Paare aus localStorage abrufen
+    // Retrieve selected pairs from localStorage
     const savedPairs = localStorage.getItem('selectedPairs');
     if (savedPairs) {
       this.selectedPairs = JSON.parse(savedPairs);
@@ -68,24 +68,24 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.chartDataService.getChartDumps().subscribe(
       (dumps: any) => {
         this.pairs = dumps.map((dump: string) => this.cleanPair(dump));
-        this.dataLoaded = true; // Flag setzen, nachdem Daten geladen sind
+        this.dataLoaded = true; // Set flag after data is loaded
 
-        // Wähle gespeicherte Paare aus, die noch vorhanden sind
+        // Select stored pairs that are still available
         this.selectedPairs = this.selectedPairs.filter(pair => this.pairs.includes(pair));
 
-        // Lade die Charts für die ausgewählten Paare in der Reihenfolge der Sidebar
+        // Load charts for selected pairs in the order of the sidebar
         this.pairs.forEach(pair => {
           if (this.selectedPairs.includes(pair)) {
             this.loadChart(pair);
           }
         });
 
-        // Confidence für jedes Paar abrufen
+        // Retrieve confidence for each pair
         this.pairs.forEach((pair) => {
           this.chartDataService.getConfidence(pair).subscribe(
             (confidence: any) => {
               console.log(`Confidence for ${pair}:`, confidence);
-              this.confidences[pair] = confidence ?? 'N/A'; // Fallback-Wert
+              this.confidences[pair] = confidence ?? 'N/A'; // Fallback value
             },
             (error) => {
               console.error(`Error fetching confidence for ${pair}:`, error);
@@ -102,22 +102,22 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    // Bereits ausgewählte Charts werden in ngOnInit geladen
+    // Already selected charts are loaded in ngOnInit
   }
 
-  // Neue Daten abrufen
+  // Fetch new data
   fetchNewData(): void {
     this.chartDataService.getChartDumps().subscribe(
       (dumps: any) => {
         this.pairs = dumps.map((dump: string) => this.cleanPair(dump));
-        // Bestehende Daten zurücksetzen
+        // Reset existing data
         this.confidences = {};
         this.lastTimestamps = {};
 
-        // Sicherstellen, dass ausgewählte Paare noch vorhanden sind
+        // Ensure selected pairs are still available
         this.selectedPairs = this.selectedPairs.filter(pair => this.pairs.includes(pair));
 
-        // Laden der Charts für die ausgewählten Paare in der Reihenfolge der Sidebar
+        // Load charts for selected pairs in the order of the sidebar
         this.pairs.forEach(pair => {
           if (this.selectedPairs.includes(pair)) {
             this.loadChart(pair);
@@ -130,70 +130,54 @@ export class AppComponent implements OnInit, AfterViewInit {
     );
   }
 
-  // Ein Paar aus der Sidebar auswählen oder abwählen
+  // Select or deselect a pair from the sidebar
   togglePairSelection(pair: string): void {
     const index = this.selectedPairs.indexOf(pair);
     if (index > -1) {
-      // Paar ist bereits ausgewählt, entferne es
+      // Pair is already selected, remove it
       this.selectedPairs.splice(index, 1);
       this.removeChart(pair);
     } else {
-      // Paar ist nicht ausgewählt, füge es hinzu
+      // Pair is not selected, add it
       this.selectedPairs.push(pair);
       this.loadChart(pair);
     }
 
-    // Speichere die ausgewählten Paare in localStorage
+    // Save selected pairs to localStorage
     localStorage.setItem('selectedPairs', JSON.stringify(this.selectedPairs));
   }
 
-  // Charts basierend auf den ausgewählten Paaren laden
+  // Load charts based on selected pairs
   loadChart(pair: string): void {
     if (!this.selectedPairs.includes(pair)) return;
 
-    // Erstelle einen eindeutigen Wrapper für jedes Paar
+    // Create a unique wrapper for each pair
     const mainContent = document.querySelector('.main-content') as HTMLElement;
     if (!mainContent) return;
 
     const existingChart = document.getElementById(`chartContainer-${pair}`);
-    if (existingChart) return; // Chart bereits vorhanden
+    if (existingChart) return; // Chart already exists
 
-    // Erstelle ein übergeordnetes Div für Pair Name und Chart
+    // Create a parent div for Pair Name and Chart
     const chartWrapper = this.renderer.createElement('div');
     this.renderer.addClass(chartWrapper, 'chart-wrapper');
-    this.renderer.setStyle(chartWrapper, 'position', 'relative');
-    this.renderer.setStyle(chartWrapper, 'width', '100%');
-    this.renderer.setStyle(chartWrapper, 'height', '300px'); // Feste Höhe anpassen
-    this.renderer.setStyle(chartWrapper, 'margin-top', '20px'); // Konsistenter oberer Abstand
-    this.renderer.setStyle(chartWrapper, 'margin-bottom', '20px'); // Abstand zwischen Charts
 
-    // Erstelle ein Element für den Pair Name
+    // Create an element for the Pair Name
     const pairNameElement = this.renderer.createElement('div');
     this.renderer.addClass(pairNameElement, 'chart-pair-name');
-    this.renderer.setStyle(pairNameElement, 'position', 'absolute');
-    this.renderer.setStyle(pairNameElement, 'top', '10px');
-    this.renderer.setStyle(pairNameElement, 'left', '10px');
-    this.renderer.setStyle(pairNameElement, 'background-color', 'rgba(0, 0, 0, 0.5)');
-    this.renderer.setStyle(pairNameElement, 'color', '#fff');
-    this.renderer.setStyle(pairNameElement, 'padding', '5px 10px');
-    this.renderer.setStyle(pairNameElement, 'border-radius', '4px');
-    this.renderer.setStyle(pairNameElement, 'z-index', '10');
-
     const pairNameText = this.renderer.createText(pair);
     this.renderer.appendChild(pairNameElement, pairNameText);
 
-    // Erstelle ein Div für den Chart
+    // Create a div for the Chart
     const chartContainer = this.renderer.createElement('div');
     this.renderer.setAttribute(chartContainer, 'id', `chartContainer-${pair}`);
     this.renderer.addClass(chartContainer, 'individual-chart');
-    this.renderer.setStyle(chartContainer, 'width', '100%');
-    this.renderer.setStyle(chartContainer, 'height', '100%'); // Inner container fills the wrapper
 
-    // Füge die Elemente zum Chart Wrapper hinzu
+    // Append elements to the Chart Wrapper
     this.renderer.appendChild(chartWrapper, pairNameElement);
     this.renderer.appendChild(chartWrapper, chartContainer);
 
-    // Bestimme die Position basierend auf der Reihenfolge der Sidebar
+    // Determine position based on the order of the sidebar
     const pairIndex = this.pairs.indexOf(pair);
     let insertBeforeElement: HTMLElement | null = null;
 
@@ -214,7 +198,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.renderer.appendChild(mainContent, chartWrapper);
     }
 
-    // Erstelle das Chart
+    // Create the Chart
     const chart = LightweightCharts.createChart(chartContainer, {
       width: chartContainer.clientWidth,
       height: chartContainer.clientHeight,
@@ -243,10 +227,10 @@ export class AppComponent implements OnInit, AfterViewInit {
 
     this.charts[pair] = chart;
 
-    // Candlestick-Serie hinzufügen
+    // Add Candlestick Series
     const candleSeries = chart.addCandlestickSeries({
-      upColor: '#4caf50', // Grün für steigende Kerzen
-      downColor: '#f44336', // Rot für fallende Kerzen
+      upColor: '#4caf50', // Green for rising candles
+      downColor: '#f44336', // Red for falling candles
       borderDownColor: '#f44336',
       borderUpColor: '#4caf50',
       wickDownColor: '#f44336',
@@ -278,15 +262,15 @@ export class AppComponent implements OnInit, AfterViewInit {
       }
     );
 
-    // Linien-Serie für Vorhersagen hinzufügen
+    // Add Line Series for Predictions
     const lineSeries = chart.addLineSeries({
-      color: '#2196f3', // Blau für Vorhersagen
+      color: '#2196f3', // Blue for predictions
       lineWidth: 2,
     });
 
     this.lineSeriesMap[pair] = lineSeries;
 
-    // Vorhersagedaten abrufen und setzen
+    // Fetch and set prediction data
     this.chartDataService.getPrediction(pair).subscribe(predictionData => {
       if (Array.isArray(predictionData)) {
         lineSeries.setData(
@@ -298,11 +282,11 @@ export class AppComponent implements OnInit, AfterViewInit {
       }
     });
 
-    // Confidence-Marker abrufen und setzen
+    // Fetch and set confidence markers
     this.chartDataService.getConfidences(pair).subscribe(confidenceData => {
       if (Array.isArray(confidenceData) && confidenceData.length > 0) {
         const markers: SeriesMarker<Time>[] = confidenceData.map((confidence: any) => ({
-          // Zeitstempel anpassen und als Time typisieren
+          // Adjust timestamp and typecast as Time
           time: this.adjustTimestamp(confidence.t),
           position: 'aboveBar',
           color: 'white',
@@ -315,7 +299,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     });
   }
 
-  // Chart entfernen, wenn ein Paar abgewählt wird
+  // Remove chart when a pair is deselected
   removeChart(pair: string): void {
     const chartContainer = document.getElementById(`chartContainer-${pair}`);
     if (chartContainer && this.charts[pair]) {
@@ -324,7 +308,7 @@ export class AppComponent implements OnInit, AfterViewInit {
       delete this.candleSeriesMap[pair];
       delete this.lineSeriesMap[pair];
       
-      // Entferne den gesamten Chart Wrapper (Pair Name + Chart)
+      // Remove the entire Chart Wrapper (Pair Name + Chart)
       const chartWrapper = chartContainer.parentElement;
       if (chartWrapper) {
         this.renderer.removeChild(document.querySelector('.main-content'), chartWrapper);
@@ -332,15 +316,15 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // Paar-String bereinigen
+  // Clean pair string
   cleanPair(pair: string): string {
     if (!pair) {
-      return ''; // Leeren String zurückgeben oder entsprechend behandeln
+      return ''; // Return empty string or handle accordingly
     }
     return pair.replace(/[^a-zA-Z0-9]/g, '');
   }
 
-  // Datum im Format "dd-mm-yyyy hh:mm" formatieren
+  // Format date to "dd-mm-yyyy hh:mm"
   formatDateToDDMMYYYYHHMM(date: any): string {
     const day = ('0' + date.getDate()).slice(-2);
     const month = ('0' + (date.getMonth() + 1)).slice(-2);
@@ -350,30 +334,30 @@ export class AppComponent implements OnInit, AfterViewInit {
     return `${day}-${month}-${year} ${hours}:${minutes}`;
   }
 
-  // Funktion zur Anpassung des Zeitstempels basierend auf der lokalen Zeitzone
+  // Function to adjust timestamp based on local timezone
   adjustTimestamp(timestamp: number): Time {
-    // Berechne den aktuellen Zeitzonenoffset in Sekunden
-    const timezoneOffsetInSeconds = new Date().getTimezoneOffset() * 60; // getTimezoneOffset gibt Minuten zurück
+    // Calculate current timezone offset in seconds
+    const timezoneOffsetInSeconds = new Date().getTimezoneOffset() * 60; // getTimezoneOffset returns minutes
 
-    // Passe den Zeitstempel an die lokale Zeit an
+    // Adjust the timestamp to local time
     const adjustedTimestamp = timestamp - timezoneOffsetInSeconds;
 
     console.log(`Original Timestamp: ${timestamp}, Adjusted Timestamp: ${adjustedTimestamp}`);
     return adjustedTimestamp as Time;
   }
 
-  // Dark Mode umschalten
+  // Toggle Dark Mode
   toggleDarkMode(isDark: boolean): void {
     this.isDarkMode = isDark;
     if (this.isDarkMode) {
       this.renderer.addClass(document.body, 'dark-mode');
-      localStorage.setItem('theme', 'dark'); // Präferenz speichern
+      localStorage.setItem('theme', 'dark'); // Save preference
     } else {
       this.renderer.removeClass(document.body, 'dark-mode');
-      localStorage.setItem('theme', 'light'); // Präferenz speichern
+      localStorage.setItem('theme', 'light'); // Save preference
     }
 
-    // Aktualisiere alle vorhandenen Charts, um den Dark Mode widerzuspiegeln
+    // Update all existing charts to reflect Dark Mode
     for (const pair of this.selectedPairs) {
       if (this.charts[pair]) {
         this.charts[pair].applyOptions({
@@ -400,12 +384,12 @@ export class AppComponent implements OnInit, AfterViewInit {
     }
   }
 
-  // Sidebar-Sichtbarkeit umschalten
+  // Toggle Sidebar Visibility
   toggleSidebar(): void {
     this.isSidebarVisible = !this.isSidebarVisible;
-    // Chart-Größe nach Umschalten der Sidebar anpassen
+    // Adjust chart sizes after toggling the sidebar
     setTimeout(() => {
       this.adjustChartSizes();
-    }, 300); // Entspricht der CSS-Transition-Dauer
+    }, 300); // Matches the CSS transition duration
   }
 }
