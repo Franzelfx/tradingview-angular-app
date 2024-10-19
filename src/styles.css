@@ -108,28 +108,6 @@ body.dark-mode .header {
     transform: scale(1.2);
 }
 
-/* Selected Pair Info */
-.selected-pair-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.pair-name {
-    font-weight: 500;
-    font-size: 16px;
-}
-
-.pair-timestamp {
-    font-size: 12px;
-    color: #777;
-    transition: color 0.3s ease;
-}
-
-body.dark-mode .pair-timestamp {
-    color: #bbb;
-}
-
 /* Switch Container */
 .switch-container {
     display: flex;
@@ -236,6 +214,15 @@ body.dark-mode .pair-selector:hover {
     background-color: var(--color-sidebar-hover);
 }
 
+/* Highlight für ausgewählte Paare */
+.pair-selector.selected {
+    background-color: rgba(76, 175, 80, 0.2);
+    /* Grüner Schatten, angepasst nach Bedarf */
+    box-shadow: inset 0 0 10px rgba(76, 175, 80, 0.5);
+    border-left: 5px solid var(--color-button-hover);
+    /* Optional: Linker Rand für zusätzliche Hervorhebung */
+}
+
 /* Main Content Styles */
 .main-content {
     margin-top: 60px;
@@ -247,45 +234,6 @@ body.dark-mode .pair-selector:hover {
     background-color: var(--color-main-bg);
     color: var(--color-main-text);
     min-height: calc(100vh - 60px);
-
-    /* Entferne Flexbox, da wir eine feste Höhe verwenden */
-    /* display: flex;
-    flex-direction: column; */
-}
-
-body.dark-mode .main-content {
-    background-color: var(--color-main-bg);
-}
-
-.main-content.full-width {
-    margin-left: 0;
-}
-
-/* Metadata Container */
-.metadata-container {
-    margin-bottom: 20px;
-    color: inherit;
-}
-
-.metadata-container h3,
-.metadata-container h4 {
-    margin: 0;
-}
-
-body.dark-mode .metadata-container h3,
-body.dark-mode .metadata-container h4 {
-    color: #e0e0e0;
-}
-
-/* Chart Container */
-#chartContainer {
-    /* Setze eine feste Höhe, z.B. 300px */
-    height: 300px;
-    /* Anpassen nach Bedarf */
-    background-color: var(--color-chart-bg);
-    border: 1px solid var(--color-chart-border);
-    border-radius: 4px;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 /* Responsive Design */
@@ -353,9 +301,11 @@ body,
 .header,
 .sidebar,
 .main-content,
-#chartContainer,
+.individual-chart,
 .pair-selector,
 .metadata-container h3,
 .metadata-container h4 {
     transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+/* Zusätzliche globale Stile hier */

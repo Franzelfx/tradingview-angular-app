@@ -1,6 +1,6 @@
 <!-- src/app/app.component.html -->
 
-<!-- Header with toggle buttons and selected pair info -->
+<!-- Header mit Toggle-Buttons und Zeitstempel der ausgewählten Paare -->
 <div class="header">
   <!-- Sidebar Toggle Button -->
   <button (click)="toggleSidebar()" class="icon-button" aria-label="Toggle Sidebar">
@@ -10,10 +10,11 @@
     ></i>
   </button>
 
-  <!-- Selected Pair Info -->
-  <div class="selected-pair-info" *ngIf="selectedPair">
-    <span class="pair-name">{{ selectedPair }}</span>
-    <span class="pair-timestamp">{{ lastTimestamps[selectedPair] }}</span>
+  <!-- Zeitstempel der ausgewählten Paare -->
+  <div class="selected-pair-info" *ngIf="selectedPairs.length > 0">
+    <div *ngFor="let pair of selectedPairs" class="selected-pair">
+      <span class="pair-timestamp">{{ lastTimestamps[pair] }}</span>
+    </div>
   </div>
 
   <!-- Dark Mode Toggle Switch -->
@@ -30,16 +31,21 @@
   </div>
 </div>
 
-<!-- Sidebar for selecting pairs -->
-<div class="sidebar" [class.hidden]="!isSidebarVisible">
-  <div *ngFor="let pair of pairs" (click)="selectPair(pair)" class="pair-selector">
+<!-- Sidebar mit dynamischer Klassenbindung -->
+<div class="sidebar" [ngClass]="{'hidden': !isSidebarVisible}">
+  <div 
+    *ngFor="let pair of pairs" 
+    class="pair-selector" 
+    [ngClass]="{'selected': selectedPairs.includes(pair)}"
+    (click)="togglePairSelection(pair)"
+    aria-label="Select Pair"
+  >
     {{ pair }}
   </div>
 </div>
 
-<!-- Container for the selected pair's metadata and chart -->
-<div class="main-content" [ngClass]="{'full-width': !isSidebarVisible}" *ngIf="selectedPair">
-  <div class="metadata-container"></div>
-  <!-- Dedicated container for the chart -->
-  <div id="chartContainer"></div>
+<!-- Main Content mit dynamischer Klassenbindung -->
+<div class="main-content" [ngClass]="{'full-width': !isSidebarVisible}">
+  <!-- Dynamisch hinzugefügte Chart-Container -->
+  <!-- Diese werden von TypeScript dynamisch erstellt -->
 </div>

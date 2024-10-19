@@ -3,7 +3,7 @@
 import { AfterViewInit, Component, OnInit, Renderer2 } from '@angular/core';
 import { ChartDataService } from './chart-data.service';
 import * as LightweightCharts from 'lightweight-charts';
-import { SeriesMarker, Time } from 'lightweight-charts'; // Korrekte Importe
+import { SeriesMarker, Time } from 'lightweight-charts';
 import { HostListener } from '@angular/core';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
@@ -21,19 +21,19 @@ export class AppComponent implements OnInit, AfterViewInit {
   isDarkMode: boolean = false;
   isSidebarVisible: boolean = true; // Sidebar-Sichtbarkeitsstatus
   dataLoaded: boolean = false; // Flag zum Überprüfen, ob Daten geladen sind
-  selectedPair: string = "";
-  chart: LightweightCharts.IChartApi | null = null;
+  selectedPairs: string[] = []; // Mehrere ausgewählte Paare
+  charts: { [key: string]: LightweightCharts.IChartApi } = {}; // Mehrere Charts
+  candleSeriesMap: { [key: string]: LightweightCharts.ISeriesApi<'Candlestick'> } = {};
+  lineSeriesMap: { [key: string]: LightweightCharts.ISeriesApi<'Line'> } = {};
   dataLoading: boolean = false; // Flag zum Überprüfen, ob Daten geladen werden
   private resizeSubject: Subject<void> = new Subject();
-  private candleSeries: LightweightCharts.ISeriesApi<'Candlestick'> | null = null;
-  private lineSeries: LightweightCharts.ISeriesApi<'Line'> | null = null;
 
   constructor(
     private chartDataService: ChartDataService,
     private renderer: Renderer2 // Renderer2 für DOM-Manipulation
   ) {
     this.resizeSubject.pipe(debounceTime(100)).subscribe(() => {
-      this.adjustChartSize();
+      this.adjustChartSizes();
     });
   }
 
@@ -42,11 +42,12 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.resizeSubject.next();
   }
 
-  adjustChartSize(): void {
-    const chartContainer = document.getElementById('chartContainer');
-    if (chartContainer && this.chart) {
-      // Passe die Chart-Größe basierend auf der Containergröße an
-      this.chart.resize(chartContainer.clientWidth, chartContainer.clientHeight);
+  adjustChartSizes(): void {
+    for (const pair of this.selectedPairs) {
+      const chartContainer = document.getElementById(`chartContainer-${pair}`);
+      if (chartContainer && this.charts[pair]) {
+        this.charts[pair].resize(chartContainer.clientWidth, chartContainer.clientHeight);
+      }
     }
   }
 
@@ -58,10 +59,10 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.renderer.addClass(document.body, 'dark-mode');
     }
 
-    // Ausgewähltes Paar aus localStorage abrufen
-    const savedPair = localStorage.getItem('selectedPair');
-    if (savedPair) {
-      this.selectedPair = savedPair;
+    // Ausgewählte Paare aus localStorage abrufen
+    const savedPairs = localStorage.getItem('selectedPairs');
+    if (savedPairs) {
+      this.selectedPairs = JSON.parse(savedPairs);
     }
 
     this.chartDataService.getChartDumps().subscribe(
@@ -69,13 +70,15 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.pairs = dumps.map((dump: string) => this.cleanPair(dump));
         this.dataLoaded = true; // Flag setzen, nachdem Daten geladen sind
 
-        if (this.selectedPair && this.pairs.includes(this.selectedPair)) {
-          // Wenn das gespeicherte Paar in den abgerufenen Paaren existiert, wähle es aus
-          this.selectPair(this.selectedPair);
-        } else if (this.pairs.length > 0) {
-          // Andernfalls das erste Paar standardmäßig auswählen
-          this.selectPair(this.pairs[0]);
-        }
+        // Wähle gespeicherte Paare aus, die noch vorhanden sind
+        this.selectedPairs = this.selectedPairs.filter(pair => this.pairs.includes(pair));
+
+        // Lade die Charts für die ausgewählten Paare in der Reihenfolge der Sidebar
+        this.pairs.forEach(pair => {
+          if (this.selectedPairs.includes(pair)) {
+            this.loadChart(pair);
+          }
+        });
 
         // Confidence für jedes Paar abrufen
         this.pairs.forEach((pair) => {
@@ -99,9 +102,7 @@ export class AppComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    if (this.dataLoaded && this.selectedPair) {
-      this.loadCharts(); // Charts nach der View-Initialisierung laden
-    }
+    // Bereits ausgewählte Charts werden in ngOnInit geladen
   }
 
   // Neue Daten abrufen
@@ -113,10 +114,15 @@ export class AppComponent implements OnInit, AfterViewInit {
         this.confidences = {};
         this.lastTimestamps = {};
 
-        // Erstes Paar auswählen, wenn vorhanden
-        if (this.pairs.length > 0) {
-          this.selectPair(this.pairs[0]); // Optional: Erstes Paar standardmäßig auswählen
-        }
+        // Sicherstellen, dass ausgewählte Paare noch vorhanden sind
+        this.selectedPairs = this.selectedPairs.filter(pair => this.pairs.includes(pair));
+
+        // Laden der Charts für die ausgewählten Paare in der Reihenfolge der Sidebar
+        this.pairs.forEach(pair => {
+          if (this.selectedPairs.includes(pair)) {
+            this.loadChart(pair);
+          }
+        });
       },
       (error) => {
         console.error('Error fetching new chart dumps:', error);
@@ -124,83 +130,94 @@ export class AppComponent implements OnInit, AfterViewInit {
     );
   }
 
-  // Ein Paar aus der Sidebar auswählen
-  selectPair(pair: string): void {
-    this.dataLoading = true; // Ladezustand aktivieren
-    this.selectedPair = pair;
+  // Ein Paar aus der Sidebar auswählen oder abwählen
+  togglePairSelection(pair: string): void {
+    const index = this.selectedPairs.indexOf(pair);
+    if (index > -1) {
+      // Paar ist bereits ausgewählt, entferne es
+      this.selectedPairs.splice(index, 1);
+      this.removeChart(pair);
+    } else {
+      // Paar ist nicht ausgewählt, füge es hinzu
+      this.selectedPairs.push(pair);
+      this.loadChart(pair);
+    }
 
-    // Ausgewähltes Paar in localStorage speichern
-    localStorage.setItem('selectedPair', pair);
-
-    this.loadCharts();
+    // Speichere die ausgewählten Paare in localStorage
+    localStorage.setItem('selectedPairs', JSON.stringify(this.selectedPairs));
   }
 
-  // Charts basierend auf dem ausgewählten Paar laden
-  loadCharts(): void {
-    if (!this.selectedPair) return;
+  // Charts basierend auf den ausgewählten Paaren laden
+  loadChart(pair: string): void {
+    if (!this.selectedPairs.includes(pair)) return;
 
-    this.chartDataService.getModelBars(this.selectedPair, 2000).subscribe(
-      (data: any) => {
-        this.dataLoading = false; // Ladezustand zurücksetzen, nachdem Daten abgerufen wurden
-        if (Array.isArray(data)) {
-          this.createChart(this.selectedPair, data);
+    // Erstelle einen eindeutigen Wrapper für jedes Paar
+    const mainContent = document.querySelector('.main-content') as HTMLElement;
+    if (!mainContent) return;
+
+    const existingChart = document.getElementById(`chartContainer-${pair}`);
+    if (existingChart) return; // Chart bereits vorhanden
+
+    // Erstelle ein übergeordnetes Div für Pair Name und Chart
+    const chartWrapper = this.renderer.createElement('div');
+    this.renderer.addClass(chartWrapper, 'chart-wrapper');
+    this.renderer.setStyle(chartWrapper, 'position', 'relative');
+    this.renderer.setStyle(chartWrapper, 'width', '100%');
+    this.renderer.setStyle(chartWrapper, 'height', '300px'); // Feste Höhe anpassen
+    this.renderer.setStyle(chartWrapper, 'margin-top', '20px'); // Konsistenter oberer Abstand
+    this.renderer.setStyle(chartWrapper, 'margin-bottom', '20px'); // Abstand zwischen Charts
+
+    // Erstelle ein Element für den Pair Name
+    const pairNameElement = this.renderer.createElement('div');
+    this.renderer.addClass(pairNameElement, 'chart-pair-name');
+    this.renderer.setStyle(pairNameElement, 'position', 'absolute');
+    this.renderer.setStyle(pairNameElement, 'top', '10px');
+    this.renderer.setStyle(pairNameElement, 'left', '10px');
+    this.renderer.setStyle(pairNameElement, 'background-color', 'rgba(0, 0, 0, 0.5)');
+    this.renderer.setStyle(pairNameElement, 'color', '#fff');
+    this.renderer.setStyle(pairNameElement, 'padding', '5px 10px');
+    this.renderer.setStyle(pairNameElement, 'border-radius', '4px');
+    this.renderer.setStyle(pairNameElement, 'z-index', '10');
+
+    const pairNameText = this.renderer.createText(pair);
+    this.renderer.appendChild(pairNameElement, pairNameText);
+
+    // Erstelle ein Div für den Chart
+    const chartContainer = this.renderer.createElement('div');
+    this.renderer.setAttribute(chartContainer, 'id', `chartContainer-${pair}`);
+    this.renderer.addClass(chartContainer, 'individual-chart');
+    this.renderer.setStyle(chartContainer, 'width', '100%');
+    this.renderer.setStyle(chartContainer, 'height', '100%'); // Inner container fills the wrapper
+
+    // Füge die Elemente zum Chart Wrapper hinzu
+    this.renderer.appendChild(chartWrapper, pairNameElement);
+    this.renderer.appendChild(chartWrapper, chartContainer);
+
+    // Bestimme die Position basierend auf der Reihenfolge der Sidebar
+    const pairIndex = this.pairs.indexOf(pair);
+    let insertBeforeElement: HTMLElement | null = null;
+
+    for (let i = pairIndex + 1; i < this.pairs.length; i++) {
+      const nextPair = this.pairs[i];
+      if (this.selectedPairs.includes(nextPair)) {
+        const nextChart = document.getElementById(`chartContainer-${nextPair}`);
+        if (nextChart && nextChart.parentElement) {
+          insertBeforeElement = nextChart.parentElement;
+          break;
         }
-      },
-      (error) => {
-        this.dataLoading = false; // Ladezustand bei Fehler zurücksetzen
-        console.error('Error loading chart data:', error);
       }
-    );
-  }
-
-  // Paar-String bereinigen
-  cleanPair(pair: string): string {
-    if (!pair) {
-      return ''; // Leeren String zurückgeben oder entsprechend behandeln
     }
-    return pair.replace(/[^a-zA-Z0-9]/g, '');
-  }
 
-  // Datum im Format "dd-mm-yyyy hh:mm" formatieren
-  formatDateToDDMMYYYYHHMM(date: any) {
-    const day = ('0' + date.getDate()).slice(-2);
-    const month = ('0' + (date.getMonth() + 1)).slice(-2);
-    const year = date.getFullYear();
-    const hours = ('0' + date.getHours()).slice(-2);
-    const minutes = ('0' + date.getMinutes()).slice(-2);
-    return `${day}-${month}-${year} ${hours}:${minutes}`;
-  }
-
-  // Funktion zur Anpassung des Zeitstempels
-  adjustTimestamp(timestamp: number): Time {
-      // Angenommen, der Server liefert UTC-Zeitstempel in Sekunden
-      // Berechne den aktuellen Zeitzonenoffset in Sekunden
-      const timezoneOffsetInSeconds = new Date().getTimezoneOffset() * 60; // getTimezoneOffset gibt Minuten zurück
-
-      // Passe den Zeitstempel an die lokale Zeit an
-      const adjustedTimestamp = timestamp - timezoneOffsetInSeconds;
-
-      console.log(`Original Timestamp: ${timestamp}, Adjusted Timestamp: ${adjustedTimestamp}`);
-      return adjustedTimestamp as Time;
-  }
-
-
-  // Chart mit LightweightCharts erstellen
-  createChart(pair: string, data: any[]): void {
-    const chartContainer = document.getElementById('chartContainer');
-    if (this.chart) {
-      this.chart.remove();
-      this.chart = null;
+    if (insertBeforeElement) {
+      this.renderer.insertBefore(mainContent, chartWrapper, insertBeforeElement);
+    } else {
+      this.renderer.appendChild(mainContent, chartWrapper);
     }
-    if (!chartContainer) return;
 
-    // Berechne Chart-Abmessungen basierend auf der Containergröße
-    const chartWidth = chartContainer.clientWidth;
-    const chartHeight = chartContainer.clientHeight; // Feste Höhe aus CSS
-
-    this.chart = LightweightCharts.createChart(chartContainer, {
-      width: chartWidth,
-      height: chartHeight,
+    // Erstelle das Chart
+    const chart = LightweightCharts.createChart(chartContainer, {
+      width: chartContainer.clientWidth,
+      height: chartContainer.clientHeight,
       layout: {
         background: {
           type: LightweightCharts.ColorType.Solid,
@@ -224,20 +241,10 @@ export class AppComponent implements OnInit, AfterViewInit {
       },
     });
 
-    // Chart-Größe bei Fenstergrößenänderung anpassen
-    window.addEventListener('resize', () => {
-      this.adjustChartSize();
-    });
-
-    // Letzten Zeitstempel extrahieren
-    if (data && data.length > 0) {
-      const lastData = data[data.length - 1];
-      const lastTimestamp = this.formatDateToDDMMYYYYHHMM(new Date(lastData.time * 1000));
-      this.lastTimestamps[pair] = lastTimestamp;
-    }
+    this.charts[pair] = chart;
 
     // Candlestick-Serie hinzufügen
-    this.candleSeries = this.chart.addCandlestickSeries({
+    const candleSeries = chart.addCandlestickSeries({
       upColor: '#4caf50', // Grün für steigende Kerzen
       downColor: '#f44336', // Rot für fallende Kerzen
       borderDownColor: '#f44336',
@@ -250,40 +257,51 @@ export class AppComponent implements OnInit, AfterViewInit {
       },
     });
 
-    this.candleSeries.setData(
-      data.map(d => ({
-        time: d.time,
-        open: d.open,
-        high: d.high,
-        low: d.low,
-        close: d.close,
-      }))
+    this.candleSeriesMap[pair] = candleSeries;
+
+    this.chartDataService.getModelBars(pair, 2000).subscribe(
+      (data: any) => {
+        if (Array.isArray(data)) {
+          candleSeries.setData(
+            data.map((d: any) => ({
+              time: d.time,
+              open: d.open,
+              high: d.high,
+              low: d.low,
+              close: d.close,
+            }))
+          );
+        }
+      },
+      (error: any) => {
+        console.error(`Error loading model bars for ${pair}:`, error);
+      }
     );
 
     // Linien-Serie für Vorhersagen hinzufügen
-    this.lineSeries = this.chart.addLineSeries({
+    const lineSeries = chart.addLineSeries({
       color: '#2196f3', // Blau für Vorhersagen
       lineWidth: 2,
     });
 
+    this.lineSeriesMap[pair] = lineSeries;
+
     // Vorhersagedaten abrufen und setzen
     this.chartDataService.getPrediction(pair).subscribe(predictionData => {
       if (Array.isArray(predictionData)) {
-        if (this.lineSeries) {
-          this.lineSeries.setData(
-            predictionData.map(d => ({
-              time: d.time,
-              value: d.close,
-            }))
-          );
-        }
+        lineSeries.setData(
+          predictionData.map((d: any) => ({
+            time: d.time,
+            value: d.close,
+          }))
+        );
       }
     });
 
     // Confidence-Marker abrufen und setzen
     this.chartDataService.getConfidences(pair).subscribe(confidenceData => {
       if (Array.isArray(confidenceData) && confidenceData.length > 0) {
-        const markers: SeriesMarker<Time>[] = confidenceData.map(confidence => ({
+        const markers: SeriesMarker<Time>[] = confidenceData.map((confidence: any) => ({
           // Zeitstempel anpassen und als Time typisieren
           time: this.adjustTimestamp(confidence.t),
           position: 'aboveBar',
@@ -292,11 +310,56 @@ export class AppComponent implements OnInit, AfterViewInit {
           text: confidence.value,
         }));
 
-        if (this.candleSeries) {
-          this.candleSeries.setMarkers(markers);
-        }
+        candleSeries.setMarkers(markers);
       }
     });
+  }
+
+  // Chart entfernen, wenn ein Paar abgewählt wird
+  removeChart(pair: string): void {
+    const chartContainer = document.getElementById(`chartContainer-${pair}`);
+    if (chartContainer && this.charts[pair]) {
+      this.charts[pair].remove();
+      delete this.charts[pair];
+      delete this.candleSeriesMap[pair];
+      delete this.lineSeriesMap[pair];
+      
+      // Entferne den gesamten Chart Wrapper (Pair Name + Chart)
+      const chartWrapper = chartContainer.parentElement;
+      if (chartWrapper) {
+        this.renderer.removeChild(document.querySelector('.main-content'), chartWrapper);
+      }
+    }
+  }
+
+  // Paar-String bereinigen
+  cleanPair(pair: string): string {
+    if (!pair) {
+      return ''; // Leeren String zurückgeben oder entsprechend behandeln
+    }
+    return pair.replace(/[^a-zA-Z0-9]/g, '');
+  }
+
+  // Datum im Format "dd-mm-yyyy hh:mm" formatieren
+  formatDateToDDMMYYYYHHMM(date: any): string {
+    const day = ('0' + date.getDate()).slice(-2);
+    const month = ('0' + (date.getMonth() + 1)).slice(-2);
+    const year = date.getFullYear();
+    const hours = ('0' + date.getHours()).slice(-2);
+    const minutes = ('0' + date.getMinutes()).slice(-2);
+    return `${day}-${month}-${year} ${hours}:${minutes}`;
+  }
+
+  // Funktion zur Anpassung des Zeitstempels basierend auf der lokalen Zeitzone
+  adjustTimestamp(timestamp: number): Time {
+    // Berechne den aktuellen Zeitzonenoffset in Sekunden
+    const timezoneOffsetInSeconds = new Date().getTimezoneOffset() * 60; // getTimezoneOffset gibt Minuten zurück
+
+    // Passe den Zeitstempel an die lokale Zeit an
+    const adjustedTimestamp = timestamp - timezoneOffsetInSeconds;
+
+    console.log(`Original Timestamp: ${timestamp}, Adjusted Timestamp: ${adjustedTimestamp}`);
+    return adjustedTimestamp as Time;
   }
 
   // Dark Mode umschalten
@@ -309,9 +372,31 @@ export class AppComponent implements OnInit, AfterViewInit {
       this.renderer.removeClass(document.body, 'dark-mode');
       localStorage.setItem('theme', 'light'); // Präferenz speichern
     }
-    // Chart aktualisieren, um den Dark Mode widerzuspiegeln
-    if (this.selectedPair) {
-      this.loadCharts();
+
+    // Aktualisiere alle vorhandenen Charts, um den Dark Mode widerzuspiegeln
+    for (const pair of this.selectedPairs) {
+      if (this.charts[pair]) {
+        this.charts[pair].applyOptions({
+          layout: {
+            background: {
+              type: LightweightCharts.ColorType.Solid,
+              color: this.isDarkMode ? '#2c2c2c' : '#fafafa',
+            },
+            textColor: this.isDarkMode ? '#e0e0e0' : '#333333',
+          },
+          grid: {
+            vertLines: { color: this.isDarkMode ? '#555' : 'rgba(197, 203, 206, 0.5)' },
+            horzLines: { color: this.isDarkMode ? '#555' : 'rgba(197, 203, 206, 0.5)' },
+          },
+          rightPriceScale: {
+            borderColor: this.isDarkMode ? '#555' : 'rgba(197, 203, 206, 0.8)',
+          },
+          timeScale: {
+            borderColor: this.isDarkMode ? '#555' : 'rgba(197, 203, 206, 0.8)',
+            timeVisible: true,
+          },
+        });
+      }
     }
   }
 
@@ -320,7 +405,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     this.isSidebarVisible = !this.isSidebarVisible;
     // Chart-Größe nach Umschalten der Sidebar anpassen
     setTimeout(() => {
-      this.adjustChartSize();
+      this.adjustChartSizes();
     }, 300); // Entspricht der CSS-Transition-Dauer
   }
 }
