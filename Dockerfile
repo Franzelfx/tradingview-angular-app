@@ -14,21 +14,21 @@ RUN npm install
 COPY . .
 
 # Build the Angular app in production mode
-RUN npm run build --prod
+RUN npm run build -- --configuration production
 
 # Step 2: Set up nginx and copy the build output
 
 # Use an official nginx image to serve the Angular app
 FROM nginx:alpine
 
-# Copy the nginx configuration file (optional, you can add custom settings here)
+# Copy the nginx configuration file
 COPY nginx.conf /etc/nginx/nginx.conf
 
 # Copy the Angular build output to the nginx html directory
 COPY --from=build /app/dist/tradingview-angular-app /usr/share/nginx/html
 
-# Expose port 80
-EXPOSE 80
+# Expose port 4200 instead of 80
+EXPOSE 4200
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
