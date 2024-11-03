@@ -1,0 +1,207 @@
+/* login.component.scss */
+
+:host {
+    display: block;
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+    background-color: var(--color-background);
+    /* Utilize global CSS variable */
+    font-family: 'Poppins', sans-serif;
+}
+
+.background {
+    width: 430px;
+    height: 520px;
+    position: absolute;
+    transform: translate(-50%, -50%);
+    left: 50%;
+    top: 50%;
+
+    .shape {
+        height: 200px;
+        width: 200px;
+        position: absolute;
+        border-radius: 50%;
+
+        &:first-child {
+            background: var(--login-gradient);
+            /* Use gradient variable */
+            left: -80px;
+            top: -80px;
+        }
+
+        &:last-child {
+            background: linear-gradient(to right, #ff512f, #f09819);
+            /* Retain or replace with variable */
+            right: -30px;
+            bottom: -80px;
+        }
+    }
+}
+
+/* Login Form Styles */
+form {
+    height: 520px;
+    width: 400px;
+    background-color: rgba(255, 255, 255, 0.13);
+    position: absolute;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 40px rgba(8, 7, 16, 0.6);
+    padding: 50px 35px;
+    color: #ffffff;
+    letter-spacing: 0.5px;
+
+    h3 {
+        font-size: 32px;
+        font-weight: 500;
+        line-height: 42px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    label {
+        display: block;
+        margin-top: 30px;
+        font-size: 16px;
+        font-weight: 500;
+    }
+
+    input {
+        display: block;
+        height: 50px;
+        width: 100%;
+        background-color: rgba(255, 255, 255, 0.07);
+        border-radius: 3px;
+        padding: 0 10px;
+        margin-top: 8px;
+        font-size: 14px;
+        font-weight: 300;
+        color: #ffffff;
+
+        &::placeholder {
+            color: #e5e5e5;
+        }
+
+        &:focus {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+    }
+
+    .error {
+        color: #ff6b6b;
+        font-size: 12px;
+        margin-top: 5px;
+    }
+
+    button {
+        margin-top: 50px;
+        width: 100%;
+        background-color: #ffffff;
+        color: #080710;
+        padding: 15px 0;
+        font-size: 18px;
+        font-weight: 600;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease;
+
+        &:hover:not(:disabled) {
+            background-color: #f1f1f1;
+        }
+
+        &:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+            color: #666;
+        }
+    }
+
+    .social {
+        margin-top: 30px;
+        display: flex;
+        justify-content: center;
+
+        div {
+            width: 150px;
+            border-radius: 3px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.27);
+            color: #eaf0fb;
+            text-align: center;
+            margin: 0 5px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s ease;
+
+            i {
+                margin-right: 8px;
+            }
+
+            &:hover {
+                background-color: rgba(255, 255, 255, 0.47);
+            }
+
+            &.fb {
+                background-color: rgba(59, 89, 152, 0.7);
+                /* Facebook Blue */
+                color: #ffffff;
+
+                &:hover {
+                    background-color: rgba(59, 89, 152, 0.9);
+                }
+            }
+
+            &.go {
+                background-color: rgba(219, 68, 55, 0.7);
+                /* Google Red */
+                color: #ffffff;
+
+                &:hover {
+                    background-color: rgba(219, 68, 55, 0.9);
+                }
+            }
+        }
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 500px) {
+    .background {
+        width: 300px;
+        height: 380px;
+
+        .shape {
+            height: 150px;
+            width: 150px;
+
+            &:first-child {
+                left: -60px;
+                top: -60px;
+            }
+
+            &:last-child {
+                right: -20px;
+                bottom: -60px;
+            }
+        }
+    }
+
+    form {
+        width: 90%;
+        padding: 40px 25px;
+        height: auto;
+
+        .social div {
+            width: 100px;
+            font-size: 14px;
+        }
+    }
+}

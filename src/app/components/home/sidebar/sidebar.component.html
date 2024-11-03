@@ -1,0 +1,11 @@
+<div class="sidebar" [ngClass]="{'hidden': !isSidebarVisible}">
+  <div 
+    *ngFor="let pair of pairs" 
+    class="pair-selector" 
+    [ngClass]="{'selected': selectedPairs.includes(pair)}"
+    (click)="onTogglePairSelection(pair)"
+    aria-label="Select Pair"
+  >
+    {{ pair }}
+  </div>
+</div>

@@ -10,7 +10,7 @@
     --color-text: #333333;
     --color-header-bg: #f5f5f5;
     --color-header-text: #333333;
-    /* Black */
+    /* Sidebar Colors */
     --color-sidebar-bg: #f0f0f0;
     --color-sidebar-text: #333333;
     --color-sidebar-hover: #ddd;
@@ -21,11 +21,11 @@
     --color-button-hover: #4caf50;
     /* Sidebar Width Variables */
     --sidebar-width: 150px;
-    /* Reduced from 200px */
     --sidebar-width-medium: 130px;
-    /* Reduced from 180px */
     --sidebar-width-small: 100px;
-    /* Reduced from 150px */
+
+    /* Gradient Variables for Light Theme */
+    --login-bg-gradient: linear-gradient(90deg, #002438 0%, #340979 37%, rgba(0, 212, 255, 1) 94%);
 }
 
 body.dark-mode {
@@ -34,7 +34,7 @@ body.dark-mode {
     --color-text: #e0e0e0;
     --color-header-bg: #2c2c2c;
     --color-header-text: #ffffff;
-    /* White */
+    /* Sidebar Colors */
     --color-sidebar-bg: #3c3c3c;
     --color-sidebar-text: #e0e0e0;
     --color-sidebar-hover: #555;
@@ -45,19 +45,24 @@ body.dark-mode {
     --color-button-hover: #4caf50;
     /* Sidebar Width Variables for Dark Mode */
     --sidebar-width: 150px;
-    /* Ensure consistency with light mode */
     --sidebar-width-medium: 130px;
-    /* Reduced from 180px */
     --sidebar-width-small: 100px;
-    /* Reduced from 150px */
+
+    /* Gradient Variables for Dark Theme */
+    --login-bg-gradient: linear-gradient(90deg, #1e1e1e 0%, #555555 37%, rgba(0, 212, 255, 1) 94%);
 }
 
 /* Global Styles */
+*,
+::after,
+::before {
+    box-sizing: border-box;
+}
+
 body {
     font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
     background-color: var(--color-background);
     color: var(--color-text);
     transition: background-color 0.3s ease, color 0.3s ease;

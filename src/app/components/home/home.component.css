@@ -1,0 +1,69 @@
+/* Ensure the html, body, and app-root take full height */
+html,
+body,
+app-root {
+    height: 100%;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header Styles */
+header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 60px;
+    z-index: 10;
+}
+
+app-header {
+    height: 100%;
+    width: 100%;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Main container holding sidebar and main content */
+.container {
+    display: flex;
+    flex-direction: row;
+    height: calc(100vh - 60px);
+    /* Adjusts for header height */
+    margin-top: 60px;
+    /* Pushes down to avoid header overlap */
+    width: 100%;
+    transition: all 0.3s ease;
+}
+
+/* Sidebar Styles */
+app-sidebar {
+    width: 150px;
+    /* Default sidebar width */
+    flex-shrink: 0;
+    /* Prevents the sidebar from shrinking */
+    transition: width 0.3s ease;
+    overflow: hidden;
+}
+
+app-sidebar.hidden {
+    width: 0;
+    padding: 0;
+    /* Remove padding when hidden */
+    box-shadow: none;
+    /* Remove shadow when hidden */
+}
+
+/* Main Content Styles */
+.main-content {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    transition: all 0.3s ease;
+}
+
+/* Optional: Styling adjustments for body and content responsiveness */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+}

@@ -1,0 +1,57 @@
+<!-- login.component.html -->
+<div class="background">
+  <div class="shape"></div>
+  <div class="shape"></div>
+</div>
+
+<form (ngSubmit)="onSubmit()" #loginForm="ngForm">
+  <h3>Login Here</h3>
+
+  <!-- Username Field -->
+  <label for="username">Username</label>
+  <input
+    type="text"
+    id="username"
+    name="username"
+    placeholder="Email or Phone"
+    required
+    [(ngModel)]="username"
+    #usernameInput="ngModel"
+  />
+  <div *ngIf="usernameInput.invalid && usernameInput.touched" class="error">
+    Username is required.
+  </div>
+
+  <!-- Password Field -->
+  <label for="password">Password</label>
+  <input
+    type="password"
+    id="password"
+    name="password"
+    placeholder="Password"
+    required
+    [(ngModel)]="password"
+    #passwordInput="ngModel"
+  />
+  <div *ngIf="passwordInput.invalid && passwordInput.touched" class="error">
+    Password is required.
+  </div>
+
+  <!-- Submit Button -->
+  <button type="submit" [disabled]="loginForm.invalid">Log In</button>
+
+  <!-- Social Login Buttons -->
+  <div class="social">
+    <div class="go" (click)="loginWithGoogle()">
+      <i class="fab fa-google"></i> Google
+    </div>
+    <div class="fb" (click)="loginWithFacebook()">
+      <i class="fab fa-facebook"></i> Facebook
+    </div>
+  </div>
+
+  <!-- Login Failure Message -->
+  <div *ngIf="loginFailed" class="error">
+    Invalid username or password.
+  </div>
+</form>

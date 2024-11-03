@@ -1,0 +1,46 @@
+/* sidebar.component.css */
+
+.sidebar {
+    height: 100%;
+    /* Remove the width property to avoid conflicts */
+    /* width: var(--sidebar-width, 250px); */
+    background-color: var(--color-sidebar-bg, #ffffff);
+    color: var(--color-sidebar-text, #000000);
+    padding-top: 20px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    overflow: hidden;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode .sidebar {
+    background-color: var(--color-sidebar-bg-dark, #333333);
+    color: var(--color-sidebar-text-dark, #ffffff);
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.sidebar.hidden {
+    /* Remove the width: 0; */
+    padding: 0;
+    box-shadow: none;
+}
+
+.pair-selector {
+    padding: 15px 20px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.pair-selector:hover {
+    background-color: var(--color-sidebar-hover, #f0f0f0);
+}
+
+body.dark-mode .pair-selector:hover {
+    background-color: var(--color-sidebar-hover-dark, #444444);
+}
+
+.pair-selector.selected {
+    background-color: rgba(76, 175, 80, 0.2);
+    box-shadow: inset 0 0 10px rgba(76, 175, 80, 0.5);
+    border-left: 5px solid var(--color-button-hover, #4caf50);
+}

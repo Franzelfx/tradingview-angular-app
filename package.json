@@ -23,6 +23,7 @@
     "chart.js": "^4.4.0",
     "chartjs": "^0.3.24",
     "express": "^4.21.0",
+    "jwt-decode": "^4.0.0",
     "lightweight-charts": "^4.1.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
