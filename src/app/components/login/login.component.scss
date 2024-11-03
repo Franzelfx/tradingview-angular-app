@@ -1,95 +1,126 @@
-/* login.component.scss */
+/* src/app/components/login/login.component.scss */
+@import url('https://rsms.me/inter/inter-ui.css');
 
 :host {
     display: block;
     height: 100vh;
     width: 100vw;
     position: relative;
-    background-color: var(--color-background);
-    /* Utilize global CSS variable */
-    font-family: 'Poppins', sans-serif;
+    background-color: var(--color-background, #ffffff);
+    font-family: 'Inter UI', sans-serif;
 }
 
-.background {
-    width: 430px;
-    height: 520px;
+.page {
+    background: #e2e2e5;
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 40px);
     position: absolute;
-    transform: translate(-50%, -50%);
-    left: 50%;
-    top: 50%;
+    place-content: center;
+    width: calc(100% - 40px);
+}
 
-    .shape {
-        height: 200px;
-        width: 200px;
-        position: absolute;
-        border-radius: 50%;
+.container {
+    display: flex;
+    height: 320px;
+    margin: 0 auto;
+    width: 640px;
 
-        &:first-child {
-            background: var(--login-gradient);
-            /* Use gradient variable */
-            left: -80px;
-            top: -80px;
-        }
-
-        &:last-child {
-            background: linear-gradient(to right, #ff512f, #f09819);
-            /* Retain or replace with variable */
-            right: -30px;
-            bottom: -80px;
-        }
+    @media (max-width: 767px) {
+        flex-direction: column;
+        height: 630px;
+        width: 320px;
     }
 }
 
-/* Login Form Styles */
-form {
-    height: 520px;
-    width: 400px;
-    background-color: rgba(255, 255, 255, 0.13);
-    position: absolute;
-    transform: translate(-50%, -50%);
-    top: 50%;
-    left: 50%;
-    border-radius: 10px;
-    backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 0 40px rgba(8, 7, 16, 0.6);
-    padding: 50px 35px;
-    color: #ffffff;
-    letter-spacing: 0.5px;
+.left {
+    background: white;
+    height: calc(100% - 40px);
+    top: 20px;
+    position: relative;
+    width: 50%;
+    padding: 20px;
 
-    h3 {
-        font-size: 32px;
-        font-weight: 500;
-        line-height: 42px;
-        text-align: center;
-        margin-bottom: 20px;
+    .login {
+        font-size: 50px;
+        font-weight: 900;
+        margin: 50px 40px 40px;
+    }
+
+    .eula {
+        color: #999;
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 40px;
+    }
+
+    @media (max-width: 767px) {
+        height: 100%;
+        left: 20px;
+        width: calc(100% - 40px);
+        max-height: 270px;
+    }
+}
+
+.right {
+    background: #474A59;
+    box-shadow: 0px 0px 40px 16px rgba(0, 0, 0, 0.22);
+    color: #F1F1F2;
+    position: relative;
+    width: 50%;
+    padding: 40px;
+
+    svg {
+        position: absolute;
+        width: 320px;
+        height: 300px;
+
+        path {
+            fill: none;
+            stroke: url(#linearGradient);
+            stroke-width: 4;
+            stroke-dasharray: 240 1386;
+        }
+
+        @media (max-width: 767px) {
+            width: 240px;
+            height: 225px;
+        }
+    }
+
+    .form {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: calc(100% - 80px);
     }
 
     label {
-        display: block;
-        margin-top: 30px;
-        font-size: 16px;
-        font-weight: 500;
+        color: #c2c2c5;
+        font-size: 14px;
+        margin: 20px 0 5px;
     }
 
-    input {
-        display: block;
-        height: 50px;
-        width: 100%;
-        background-color: rgba(255, 255, 255, 0.07);
+    input[type='email'],
+    input[type='password'] {
+        background: transparent;
+        border: 1px solid #f2f2f2;
         border-radius: 3px;
+        color: #f2f2f2;
+        font-size: 20px;
+        height: 40px;
+        line-height: 40px;
         padding: 0 10px;
-        margin-top: 8px;
-        font-size: 14px;
-        font-weight: 300;
-        color: #ffffff;
+        width: 100%;
+        transition: border-color 0.3s ease;
 
         &::placeholder {
             color: #e5e5e5;
         }
 
         &:focus {
-            background-color: rgba(255, 255, 255, 0.1);
+            border-color: #ff00ff;
         }
     }
 
@@ -99,17 +130,15 @@ form {
         margin-top: 5px;
     }
 
-    button {
-        margin-top: 50px;
-        width: 100%;
-        background-color: #ffffff;
-        color: #080710;
-        padding: 15px 0;
-        font-size: 18px;
-        font-weight: 600;
+    #submit {
+        color: #707075;
+        margin-top: 40px;
+        padding: 10px;
+        border: none;
         border-radius: 5px;
+        background-color: #ffffff;
         cursor: pointer;
-        transition: background-color 0.3s ease, color 0.3s ease;
+        transition: background-color 300ms, color 300ms;
 
         &:hover:not(:disabled) {
             background-color: #f1f1f1;
@@ -123,15 +152,15 @@ form {
     }
 
     .social {
-        margin-top: 30px;
         display: flex;
         justify-content: center;
+        margin-top: 30px;
 
-        div {
+        .go,
+        .fb {
             width: 150px;
             border-radius: 3px;
             padding: 10px;
-            background-color: rgba(255, 255, 255, 0.27);
             color: #eaf0fb;
             text-align: center;
             margin: 0 5px;
@@ -141,17 +170,8 @@ form {
             justify-content: center;
             transition: background-color 0.3s ease;
 
-            i {
-                margin-right: 8px;
-            }
-
-            &:hover {
-                background-color: rgba(255, 255, 255, 0.47);
-            }
-
             &.fb {
                 background-color: rgba(59, 89, 152, 0.7);
-                /* Facebook Blue */
                 color: #ffffff;
 
                 &:hover {
@@ -161,7 +181,6 @@ form {
 
             &.go {
                 background-color: rgba(219, 68, 55, 0.7);
-                /* Google Red */
                 color: #ffffff;
 
                 &:hover {
@@ -170,38 +189,11 @@ form {
             }
         }
     }
-}
 
-/* Responsive Design */
-@media (max-width: 500px) {
-    .background {
-        width: 300px;
-        height: 380px;
-
-        .shape {
-            height: 150px;
-            width: 150px;
-
-            &:first-child {
-                left: -60px;
-                top: -60px;
-            }
-
-            &:last-child {
-                right: -20px;
-                bottom: -60px;
-            }
-        }
-    }
-
-    form {
-        width: 90%;
-        padding: 40px 25px;
-        height: auto;
-
-        .social div {
-            width: 100px;
-            font-size: 14px;
-        }
+    @media (max-width: 767px) {
+        flex-shrink: 0;
+        height: 100%;
+        width: 100%;
+        max-height: 350px;
     }
 }
