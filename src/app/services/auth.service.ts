@@ -1,3 +1,4 @@
+// src/app/services/auth.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -45,7 +46,21 @@ export class AuthService {
     }
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
+    const token = this.getToken();
+    if (token) {
+      try {
+        await this.http
+          .post(
+            `${this.apiUrl}/auth/logout`,
+            {},
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
+          .toPromise();
+      } catch (error) {
+        console.error('Logout failed:', error);
+      }
+    }
     localStorage.removeItem(this.tokenKey);
     this.router.navigate(['/login']);
   }

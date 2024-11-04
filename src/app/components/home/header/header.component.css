@@ -1,3 +1,5 @@
+/* src/app/components/header/header.component.css */
+
 .header {
     display: flex;
     justify-content: space-between;
@@ -15,12 +17,6 @@
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-body.dark-mode .header {
-    background-color: var(--color-header-bg);
-    color: var(--color-header-text);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
 .icon-button {
     background: none;
     border: none;
@@ -29,6 +25,7 @@ body.dark-mode .header {
     cursor: pointer;
     display: flex;
     align-items: center;
+    transition: transform 0.3s ease;
 }
 
 .icon-button i {
@@ -39,6 +36,7 @@ body.dark-mode .header {
     transform: scale(1.2);
 }
 
+/* Logo Styling */
 .logo-container {
     flex: 1;
     display: flex;
@@ -49,15 +47,16 @@ body.dark-mode .header {
 .logo {
     width: 150px;
     height: auto;
+    max-height: 60px;
     transition: opacity 0.3s ease;
 }
 
+/* Dark Mode Toggle Switch */
 .switch-container {
     display: flex;
     align-items: center;
 }
 
-/* iOS-style Switch */
 .switch {
     position: relative;
     display: inline-block;
@@ -71,7 +70,6 @@ body.dark-mode .header {
     height: 0;
 }
 
-/* Slider */
 .slider {
     position: absolute;
     cursor: pointer;
@@ -106,4 +104,26 @@ input:focus+.slider {
 
 input:checked+.slider:before {
     transform: translateX(22px);
+}
+
+/* Logout Button Styling */
+.logout-button {
+    background: none;
+    border: none;
+    font-size: 16px;
+    color: var(--color-header-text);
+    cursor: pointer;
+    padding: 5px 10px;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    transition: color 0.3s ease;
+}
+
+.logout-button i {
+    margin-right: 5px;
+}
+
+.logout-button:hover {
+    color: var(--color-button-hover);
 }

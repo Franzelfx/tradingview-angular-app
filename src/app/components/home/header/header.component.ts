@@ -1,4 +1,6 @@
+// src/app/components/header/header.component.ts
 import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { AuthService } from '../../../services/auth.service';
 
 @Component({
   selector: 'app-header',
@@ -12,6 +14,8 @@ export class HeaderComponent {
   @Output() toggleDarkModeEvent = new EventEmitter<boolean>();
   @Output() toggleSidebarEvent = new EventEmitter<void>();
 
+  constructor(private authService: AuthService) {}
+
   onToggleDarkMode(event: Event): void {
     const isChecked = (event.target as HTMLInputElement).checked;
     this.toggleDarkModeEvent.emit(isChecked);
@@ -19,5 +23,9 @@ export class HeaderComponent {
 
   onToggleSidebar(): void {
     this.toggleSidebarEvent.emit();
+  }
+
+  onLogout(): void {
+    this.authService.logout();
   }
 }
