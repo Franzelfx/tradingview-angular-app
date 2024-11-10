@@ -1,35 +1,40 @@
 // src/app/components/login/login.component.ts
-import {
-  Component,
-  AfterViewInit,
-  OnDestroy,
-  ViewChild,
-  ElementRef,
-} from '@angular/core';
+import { Component } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
-import { AnimeInstance } from 'animejs';
-import * as anime from 'animejs';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss'],
+  styleUrls: ['./login.component.css'],
 })
-export class LoginComponent implements AfterViewInit, OnDestroy {
+export class LoginComponent {
+  // Sign-in form properties
   username: string = '';
   password: string = '';
   loginFailed: boolean = false;
 
-  @ViewChild('emailInput') emailInput!: ElementRef;
-  @ViewChild('passwordInputField') passwordInputField!: ElementRef;
-  @ViewChild('submitButton') submitButton!: ElementRef;
-  @ViewChild('svgPath') svgPath!: ElementRef<SVGPathElement>;
+  // Sign-up form properties
+  signupName: string = '';
+  signupEmail: string = '';
+  signupPassword: string = '';
 
-  private currentAnimation: AnimeInstance | null = null;
+  // Control which panel is active
+  isSignUp: boolean = false;
 
   constructor(private authService: AuthService) {}
 
-  async onSubmit(): Promise<void> {
+  // Toggle to Sign In form
+  onSignInClick(): void {
+    this.isSignUp = false;
+  }
+
+  // Toggle to Sign Up form
+  onSignUpClick(): void {
+    this.isSignUp = true;
+  }
+
+  // Handle Sign In form submission
+  async onSignInSubmit(): Promise<void> {
     if (this.username && this.password) {
       try {
         const success = await this.authService.login(
@@ -37,7 +42,7 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
           this.password
         );
         this.loginFailed = !success;
-        // Navigate on success if required
+        // Navigate to another page if login is successful
       } catch (error) {
         console.error('Login error:', error);
         this.loginFailed = true;
@@ -45,48 +50,26 @@ export class LoginComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  // Handle Sign Up form submission
+  async onSignUpSubmit(): Promise<void> {
+    if (this.signupName && this.signupEmail && this.signupPassword) {
+      try {
+        // Implement sign-up functionality
+        // e.g., await this.authService.signup(this.signupName, this.signupEmail, this.signupPassword);
+        // After successful sign-up, you might want to log the user in or navigate to another page
+      } catch (error) {
+        console.error('Sign-up error:', error);
+        // Handle sign-up errors
+      }
+    }
+  }
+
+  // Social login methods
   loginWithGoogle(): void {
     // Implement Google login
   }
 
   loginWithFacebook(): void {
     // Implement Facebook login
-  }
-
-  ngAfterViewInit(): void {
-    const path = this.svgPath.nativeElement;
-
-    const animatePath = (offset: number, dasharray: string) => {
-      if (this.currentAnimation) this.currentAnimation.pause();
-      this.currentAnimation = anime({
-        targets: path,
-        strokeDashoffset: {
-          value: offset,
-          duration: 700,
-          easing: 'easeOutQuart',
-        },
-        strokeDasharray: {
-          value: dasharray,
-          duration: 700,
-          easing: 'easeOutQuart',
-        },
-      });
-    };
-
-    this.emailInput.nativeElement.addEventListener('focus', () => {
-      animatePath(0, '240 1386');
-    });
-
-    this.passwordInputField.nativeElement.addEventListener('focus', () => {
-      animatePath(-336, '240 1386');
-    });
-
-    this.submitButton.nativeElement.addEventListener('focus', () => {
-      animatePath(-730, '530 1386');
-    });
-  }
-
-  ngOnDestroy(): void {
-    if (this.currentAnimation) this.currentAnimation.pause();
   }
 }

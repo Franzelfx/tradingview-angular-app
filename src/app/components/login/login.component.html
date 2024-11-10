@@ -1,79 +1,88 @@
 <!-- src/app/components/login/login.component.html -->
 <div class="page">
-  <div class="container">
-    <div class="left">
-      <div class="login">Login</div>
-      <div class="eula">
-        By logging in you agree to the ridiculously long terms that you didn't bother to read
-      </div>
+  <div class="container" [ngClass]="{'right-panel-active': isSignUp}">
+    <!-- Sign Up Form -->
+    <div class="form-container sign-up-container">
+      <form (ngSubmit)="onSignUpSubmit()" #signUpForm="ngForm">
+        <h1>Create Account</h1>
+        <div class="social-container">
+          <a (click)="loginWithFacebook()" class="social"><i class="fab fa-facebook-f"></i></a>
+          <a (click)="loginWithGoogle()" class="social"><i class="fab fa-google-plus-g"></i></a>
+          <a class="social"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+        <span>or use your email for registration</span>
+        <input
+          type="text"
+          placeholder="Name"
+          required
+          [(ngModel)]="signupName"
+          name="signupName"
+        />
+        <input
+          type="email"
+          placeholder="Email"
+          required
+          [(ngModel)]="signupEmail"
+          name="signupEmail"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          required
+          [(ngModel)]="signupPassword"
+          name="signupPassword"
+        />
+        <button [disabled]="signUpForm.invalid">Sign Up</button>
+      </form>
     </div>
-    <div class="right">
-      <svg viewBox="0 0 320 300">
-        <defs>
-          <linearGradient id="linearGradient" x1="13" y1="193.5" x2="307" y2="193.5" gradientUnits="userSpaceOnUse">
-            <stop style="stop-color:#ff00ff;" offset="0" />
-            <stop style="stop-color:#ff0000;" offset="1" />
-          </linearGradient>
-        </defs>
-        <path #svgPath d="m 40,120.00016 239.99984,-3.2e-4 c 0,0 24.99263,0.79932 25.00016,35.00016 0.008,34.20084 -25.00016,35 -25.00016,35 h -239.99984 c 0,-0.0205 -25,4.01348 -25,38.5 0,34.48652 25,38.5 25,38.5 h 215 c 0,0 20,-0.99604 20,-25 0,-24.00396 -20,-25 -20,-25 h -190 c 0,0 -20,1.71033 -20,25 0,24.00396 20,25 20,25 h 168.57143" />
-      </svg>
-      <div class="form">
-        <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
-          <!-- Email Field -->
-          <label for="email">Email</label>
-          <input
-            type="email"
-            id="email"
-            name="username"
-            placeholder="Email or Phone"
-            required
-            [(ngModel)]="username"
-            #emailInput="ngModel"
-          />
-          <div *ngIf="emailInput.invalid && emailInput.touched" class="error">
-            Username is required.
-          </div>
 
-          <!-- Password Field -->
-          <label for="password">Password</label>
-          <input
-            type="password"
-            id="password"
-            name="password"
-            placeholder="Password"
-            required
-            [(ngModel)]="password"
-            #passwordInput="ngModel"
-            #passwordInputField
-          />
-          <div *ngIf="passwordInput.invalid && passwordInput.touched" class="error">
-            Password is required.
-          </div>
+    <!-- Sign In Form -->
+    <div class="form-container sign-in-container">
+      <form (ngSubmit)="onSignInSubmit()" #signInForm="ngForm">
+        <h1>Sign in</h1>
+        <div class="social-container">
+          <a (click)="loginWithFacebook()" class="social"><i class="fab fa-facebook-f"></i></a>
+          <a (click)="loginWithGoogle()" class="social"><i class="fab fa-google-plus-g"></i></a>
+          <a class="social"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+        <span>or use your account</span>
+        <input
+          type="email"
+          placeholder="Email"
+          required
+          [(ngModel)]="username"
+          name="username"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          required
+          [(ngModel)]="password"
+          name="password"
+        />
+        <a href="#">Forgot your password?</a>
+        <button [disabled]="signInForm.invalid">Sign In</button>
+        <div *ngIf="loginFailed" class="error">
+          Invalid username or password.
+        </div>
+      </form>
+    </div>
 
-          <!-- Submit Button -->
-          <input
-            type="submit"
-            id="submit"
-            value="Submit"
-            [disabled]="loginForm.invalid"
-            #submitButton
-          />
-
-          <!-- Social Login Buttons -->
-          <div class="social">
-            <div class="go" (click)="loginWithGoogle()">
-              <i class="fab fa-google"></i> Google
-            </div>
-            <div class="fb" (click)="loginWithFacebook()">
-              <i class="fab fa-facebook"></i> Facebook
-            </div>
-          </div>
-
-          <!-- Login Failure Message -->
-          <div *ngIf="loginFailed" class="error">
-            Invalid username or password.
-          </div>
-        </form>
+    <!-- Overlay Panels -->
+    <div class="overlay-container">
+      <div class="overlay">
+        <!-- Overlay for Sign In -->
+        <div class="overlay-panel overlay-left">
+          <h1>Welcome Back!</h1>
+          <p>To keep connected with us please login with your personal info</p>
+          <button class="ghost" (click)="onSignInClick()">Sign In</button>
+        </div>
+        <!-- Overlay for Sign Up -->
+        <div class="overlay-panel overlay-right">
+          <h1>Hello, Friend!</h1>
+          <p>Enter your personal details and start your journey with us</p>
+          <button class="ghost" (click)="onSignUpClick()">Sign Up</button>
+        </div>
       </div>
     </div>
   </div>

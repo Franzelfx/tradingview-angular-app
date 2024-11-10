@@ -27,8 +27,9 @@ COPY nginx.conf /etc/nginx/nginx.conf
 # Copy the Angular build output to the nginx html directory
 COPY --from=build /app/dist/tradingview-angular-app /usr/share/nginx/html
 
-# Expose port 4200 instead of 80
-EXPOSE 4200
+# Expose ports 80 and 443
+EXPOSE 80
+EXPOSE 443
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
