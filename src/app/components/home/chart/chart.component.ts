@@ -12,6 +12,7 @@ import { ChartDataService } from '../../../services/chart-data.service';
 import * as LightweightCharts from 'lightweight-charts';
 import { Subscription } from 'rxjs';
 import { Inject } from '@angular/core';
+import { UTCTimestamp } from 'lightweight-charts'; // Importieren Sie UTCTimestamp
 
 @Component({
   selector: 'app-chart',
@@ -121,7 +122,7 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
           if (Array.isArray(data)) {
             this.candleSeries?.setData(
               data.map((d: any) => ({
-                time: d.time,
+                time: this.convertTimestamp(d.time), // Konvertierte und typisierte Zeit
                 open: d.open,
                 high: d.high,
                 low: d.low,
@@ -146,7 +147,7 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
           if (Array.isArray(predictionData)) {
             this.lineSeries?.setData(
               predictionData.map((d: any) => ({
-                time: d.time,
+                time: this.convertTimestamp(d.time), // Konvertierte und typisierte Zeit
                 value: d.close,
               }))
             );
@@ -166,35 +167,30 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
       );
 
     // Fetch and set confidence markers
-    const confidenceSub = this.chartDataService
-      .getConfidences(this.pair)
-      .subscribe(
-        (confidenceData: any) => {
-          console.log(`Confidence data for ${this.pair}:`, confidenceData);
-          if (Array.isArray(confidenceData) && confidenceData.length > 0) {
-            const markers: LightweightCharts.SeriesMarker<LightweightCharts.Time>[] =
-              confidenceData.map((confidence: any) => ({
-                time: this.adjustTimestamp(confidence.t),
-                position: 'AboveBar' as LightweightCharts.SeriesMarkerPosition,
-                color: 'white',
-                shape: 'arrowDown' as LightweightCharts.SeriesMarkerShape,
-                text: confidence.value,
-              }));
-            this.candleSeries?.setMarkers(markers);
-          } else {
-            console.warn(
-              `Unexpected confidence data format or empty data for ${this.pair}:`,
-              confidenceData
-            );
-          }
-        },
-        (error: any) => {
-          console.error(
-            `Error loading confidence data for ${this.pair}:`,
-            error
-          );
-        }
+const confidenceSub = this.chartDataService.getConfidences(this.pair).subscribe(
+  (confidenceData: any) => {
+    console.log(`Confidence data for ${this.pair}:`, confidenceData);
+    if (Array.isArray(confidenceData) && confidenceData.length > 0) {
+      const markers: LightweightCharts.SeriesMarker<UTCTimestamp>[] =
+        confidenceData.map((confidence: any) => ({
+          time: this.convertTimestamp(confidence.t),
+          position: 'belowBar' as LightweightCharts.SeriesMarkerPosition,
+          color: this.isDarkMode ? 'white' : 'black',
+          shape: 'circle' as LightweightCharts.SeriesMarkerShape,
+          text: confidence.value.toString(),
+        }));
+      this.candleSeries?.setMarkers(markers);
+    } else {
+      console.warn(
+        `Unexpected confidence data format or empty data for ${this.pair}:`,
+        confidenceData
       );
+    }
+  },
+  (error: any) => {
+    console.error(`Error loading confidence data for ${this.pair}:`, error);
+  }
+);
 
     this.subscriptions.add(barsSub);
     this.subscriptions.add(predictionSub);
@@ -214,10 +210,12 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
     this.resizeObserver.observe(this.chartElement.nativeElement);
   }
 
-  adjustTimestamp(timestamp: number): LightweightCharts.Time {
-    const timezoneOffsetInSeconds = new Date().getTimezoneOffset() * 60;
-    const adjustedTimestamp = timestamp - timezoneOffsetInSeconds;
-    console.log(`Adjusted timestamp for ${timestamp}:`, adjustedTimestamp);
-    return adjustedTimestamp as LightweightCharts.Time;
-  }
+  // Anpassung der Zeitstempel
+  convertTimestamp = (ts: number): UTCTimestamp => {
+    // Überprüfen, ob der Zeitstempel in Millisekunden ist (z.B. Länge > 10)
+    if (ts > 1e10) {
+      return Math.floor(ts / 1000) as UTCTimestamp;
+    }
+    return ts as UTCTimestamp;
+  };
 }
