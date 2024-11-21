@@ -1,0 +1,12 @@
+<!-- src/app/components/execution-log/execution-log.component.html -->
+
+<h2 mat-dialog-title>Execution Log</h2>
+<mat-dialog-content class="execution-log-container">
+  <div class="logs">
+    <div *ngFor="let message of logMessages">{{ message }}</div>
+  </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="clearLogs()">Clear Logs</button>
+  <button mat-button color="primary" (click)="closeDialog()">Close</button>
+</mat-dialog-actions>

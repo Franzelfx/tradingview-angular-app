@@ -1,9 +1,11 @@
+// src/app/components/chart/chart.component.ts
+
 import {
   Component,
   Input,
   OnInit,
-  OnDestroy,
   AfterViewInit,
+  OnDestroy,
   Renderer2,
   ViewChild,
   ElementRef,
@@ -11,8 +13,10 @@ import {
 import { ChartDataService } from '../../../services/chart-data.service';
 import * as LightweightCharts from 'lightweight-charts';
 import { Subscription } from 'rxjs';
-import { Inject } from '@angular/core';
-import { UTCTimestamp } from 'lightweight-charts'; // Importieren Sie UTCTimestamp
+import { UTCTimestamp } from 'lightweight-charts';
+import { MatDialog } from '@angular/material/dialog';
+import { ExecutionLogComponent } from './execution-log/execution-log.component';
+import { WebSocketService } from '../../../services/web-socket.service';
 
 @Component({
   selector: 'app-chart',
@@ -30,10 +34,12 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
   private lineSeries: LightweightCharts.ISeriesApi<'Line'> | undefined;
   private subscriptions: Subscription = new Subscription();
   private resizeObserver: ResizeObserver | undefined;
+  private wsService: WebSocketService = new WebSocketService();
 
   constructor(
-    @Inject(ChartDataService) private chartDataService: ChartDataService,
-    private renderer: Renderer2
+    private chartDataService: ChartDataService,
+    private renderer: Renderer2,
+    private dialog: MatDialog
   ) {}
 
   ngOnInit(): void {
@@ -122,7 +128,7 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
           if (Array.isArray(data)) {
             this.candleSeries?.setData(
               data.map((d: any) => ({
-                time: this.convertTimestamp(d.time), // Konvertierte und typisierte Zeit
+                time: this.convertTimestamp(d.time), // Converted and typed time
                 open: d.open,
                 high: d.high,
                 low: d.low,
@@ -147,7 +153,7 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
           if (Array.isArray(predictionData)) {
             this.lineSeries?.setData(
               predictionData.map((d: any) => ({
-                time: this.convertTimestamp(d.time), // Konvertierte und typisierte Zeit
+                time: this.convertTimestamp(d.time), // Converted and typed time
                 value: d.close,
               }))
             );
@@ -167,34 +173,42 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
       );
 
     // Fetch and set confidence markers
-const confidenceSub = this.chartDataService.getConfidences(this.pair).subscribe(
-  (confidenceData: any) => {
-    console.log(`Confidence data for ${this.pair}:`, confidenceData);
-    if (Array.isArray(confidenceData) && confidenceData.length > 0) {
-      const markers: LightweightCharts.SeriesMarker<UTCTimestamp>[] =
-        confidenceData.map((confidence: any) => ({
-          time: this.convertTimestamp(confidence.t),
-          position: 'belowBar' as LightweightCharts.SeriesMarkerPosition,
-          color: this.isDarkMode ? 'white' : 'black',
-          shape: 'circle' as LightweightCharts.SeriesMarkerShape,
-          text: confidence.value.toString(),
-        }));
-      this.candleSeries?.setMarkers(markers);
-    } else {
-      console.warn(
-        `Unexpected confidence data format or empty data for ${this.pair}:`,
-        confidenceData
+    const confidenceSub = this.chartDataService
+      .getConfidences(this.pair)
+      .subscribe(
+        (confidenceData: any) => {
+          console.log(`Confidence data for ${this.pair}:`, confidenceData);
+          if (Array.isArray(confidenceData) && confidenceData.length > 0) {
+            const markers: LightweightCharts.SeriesMarker<UTCTimestamp>[] =
+              confidenceData.map((confidence: any) => ({
+                time: this.convertTimestamp(confidence.t),
+                position: 'belowBar' as LightweightCharts.SeriesMarkerPosition,
+                color: this.isDarkMode ? 'white' : 'black',
+                shape: 'circle' as LightweightCharts.SeriesMarkerShape,
+                text: confidence.value.toString(),
+              }));
+            this.candleSeries?.setMarkers(markers);
+          } else {
+            console.warn(
+              `Unexpected confidence data format or empty data for ${this.pair}:`,
+              confidenceData
+            );
+          }
+        },
+        (error: any) => {
+          console.error(
+            `Error loading confidence data for ${this.pair}:`,
+            error
+          );
+        }
       );
-    }
-  },
-  (error: any) => {
-    console.error(`Error loading confidence data for ${this.pair}:`, error);
-  }
-);
 
     this.subscriptions.add(barsSub);
     this.subscriptions.add(predictionSub);
     this.subscriptions.add(confidenceSub);
+
+    // Add the label and button to the chart
+    this.addOverlayElements();
 
     // Initialize ResizeObserver for responsiveness
     this.resizeObserver = new ResizeObserver(() => {
@@ -210,9 +224,74 @@ const confidenceSub = this.chartDataService.getConfidences(this.pair).subscribe(
     this.resizeObserver.observe(this.chartElement.nativeElement);
   }
 
-  // Anpassung der Zeitstempel
+  /**
+   * Adds the pair name label and the "Run Inference" button inside the chart.
+   */
+  addOverlayElements(): void {
+    const chartContainer = this.chartElement.nativeElement as HTMLElement;
+
+    // Create a container for the overlay elements
+    const overlayContainer = this.renderer.createElement('div');
+    this.renderer.addClass(overlayContainer, 'chart-overlay');
+
+    // Create the label element
+    const labelElement = this.renderer.createElement('div');
+    this.renderer.addClass(labelElement, 'chart-pair-name');
+    const labelText = this.renderer.createText(this.pair);
+    this.renderer.appendChild(labelElement, labelText);
+
+    // Create the button element
+    const buttonElement = this.renderer.createElement('button');
+    this.renderer.addClass(buttonElement, 'inference-button');
+    const buttonText = this.renderer.createText('Run Inference');
+    this.renderer.appendChild(buttonElement, buttonText);
+    this.renderer.listen(buttonElement, 'click', () => this.onInference());
+
+    // Append label and button to the overlay container
+    this.renderer.appendChild(overlayContainer, labelElement);
+    this.renderer.appendChild(overlayContainer, buttonElement);
+
+    // Append the overlay container to the chart container
+    this.renderer.appendChild(chartContainer, overlayContainer);
+  }
+
+  /**
+   * Triggers the inference endpoint and opens the execution log dialog.
+   */
+  onInference(): void {
+    // Trigger the inference endpoint with the correct pair
+    this.chartDataService.triggerInference(this.pair).subscribe(
+      (response) => {
+        console.log('Inference triggered successfully:', response);
+        // Open the execution log dialog
+        const dialogRef = this.dialog.open(ExecutionLogComponent, {
+          width: '600px',
+          height: '500px',
+        });
+
+        // Establish WebSocket connection after the dialog opens
+        dialogRef.afterOpened().subscribe(() => {
+          this.wsService.connect(this.pair);
+        });
+
+        // Disconnect WebSocket when the dialog closes
+        dialogRef.afterClosed().subscribe(() => {
+          this.wsService.disconnect();
+        });
+      },
+      (error) => {
+        console.error('Error triggering inference:', error);
+      }
+    );
+  }
+
+  /**
+   * Converts a timestamp to UTCTimestamp, handling milliseconds if necessary.
+   * @param ts - The timestamp to convert.
+   * @returns The converted UTCTimestamp.
+   */
   convertTimestamp = (ts: number): UTCTimestamp => {
-    // Überprüfen, ob der Zeitstempel in Millisekunden ist (z.B. Länge > 10)
+    // Check if the timestamp is in milliseconds (e.g., length > 10)
     if (ts > 1e10) {
       return Math.floor(ts / 1000) as UTCTimestamp;
     }

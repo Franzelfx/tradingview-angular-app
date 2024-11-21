@@ -16,7 +16,9 @@ import { AppRoutingModule } from './app-routing.module';
 // because they are already providedIn: 'root'
 
 import { AuthInterceptor } from './interceptors/auth.interceptor';
-import { HomeComponent } from './components/home/home.component'; // Import AuthInterceptor
+import { HomeComponent } from './components/home/home.component';
+import { ExecutionLogComponent } from './components/home/chart/execution-log/execution-log.component';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
 @NgModule({
   declarations: [
@@ -26,8 +28,9 @@ import { HomeComponent } from './components/home/home.component'; // Import Auth
     ChartComponent,
     LoginComponent,
     HomeComponent,
+    ExecutionLogComponent,
   ],
-  imports: [BrowserModule, HttpClientModule, FormsModule, AppRoutingModule],
+  imports: [BrowserModule, HttpClientModule, FormsModule, AppRoutingModule, MatDialogModule],
   providers: [
     {
       provide: HTTP_INTERCEPTORS, // Register the AuthInterceptor

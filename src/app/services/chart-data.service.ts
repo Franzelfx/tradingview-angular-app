@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { environment as env } from '../../environments/environment';
+import { HttpParams } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root',
@@ -51,6 +52,11 @@ export class ChartDataService {
       tap((data) => console.log(`getPrediction response for ${pair}:`, data)),
       map((data) => this.adjustTimestamps(data))
     );
+  }
+
+  triggerInference(pair: string): Observable<any> {
+    const params = new HttpParams().set('pair', pair);
+    return this.http.post(`${this.apiUrl}/inference`, null, { params });
   }
 
   private adjustTimestamps(data: any): any {

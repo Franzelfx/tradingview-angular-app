@@ -25,7 +25,10 @@
     --sidebar-width-small: 100px;
 
     /* Gradient Variables for Light Theme */
-    --login-bg-gradient: linear-gradient(90deg, #002438 0%, #340979 37%, rgba(0, 212, 255, 1) 94%);
+    --login-bg-gradient: linear-gradient(90deg,
+            #002438 0%,
+            #340979 37%,
+            rgba(0, 212, 255, 1) 94%);
 }
 
 body.dark-mode {
@@ -49,7 +52,10 @@ body.dark-mode {
     --sidebar-width-small: 100px;
 
     /* Gradient Variables for Dark Theme */
-    --login-bg-gradient: linear-gradient(90deg, #1e1e1e 0%, #555555 37%, rgba(0, 212, 255, 1) 94%);
+    --login-bg-gradient: linear-gradient(90deg,
+            #1e1e1e 0%,
+            #555555 37%,
+            rgba(0, 212, 255, 1) 94%);
 }
 
 /* Global Styles */

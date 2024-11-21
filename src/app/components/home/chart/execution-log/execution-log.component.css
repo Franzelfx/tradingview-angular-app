@@ -1,0 +1,30 @@
+/* src/app/components/execution-log/execution-log.component.css */
+
+.execution-log-container {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.logs {
+    white-space: pre-wrap;
+    font-family: monospace;
+    background-color: #000;
+    color: #0f0;
+    padding: 10px;
+    height: 300px;
+    overflow-y: scroll;
+    border-radius: 4px;
+}
+
+mat-dialog-title {
+    font-weight: 600;
+    font-size: 1.2em;
+}
+
+mat-dialog-actions {
+    margin-top: 10px;
+}
+
+button {
+    margin-left: 10px;
+}
