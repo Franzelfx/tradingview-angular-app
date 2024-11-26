@@ -4,8 +4,8 @@ import {
   Component,
   Input,
   OnInit,
-  AfterViewInit,
   OnDestroy,
+  AfterViewInit,
   Renderer2,
   ViewChild,
   ElementRef,
@@ -16,7 +16,6 @@ import { Subscription } from 'rxjs';
 import { UTCTimestamp } from 'lightweight-charts';
 import { MatDialog } from '@angular/material/dialog';
 import { ExecutionLogComponent } from './execution-log/execution-log.component';
-import { WebSocketService } from '../../../services/web-socket.service';
 
 @Component({
   selector: 'app-chart',
@@ -34,7 +33,7 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
   private lineSeries: LightweightCharts.ISeriesApi<'Line'> | undefined;
   private subscriptions: Subscription = new Subscription();
   private resizeObserver: ResizeObserver | undefined;
-  private wsService: WebSocketService = new WebSocketService();
+  private isInferenceRunning: boolean = false;
 
   constructor(
     private chartDataService: ChartDataService,
@@ -259,30 +258,33 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
    * Triggers the inference endpoint and opens the execution log dialog.
    */
   onInference(): void {
-    // Trigger the inference endpoint with the correct pair
-    this.chartDataService.triggerInference(this.pair).subscribe(
-      (response) => {
-        console.log('Inference triggered successfully:', response);
-        // Open the execution log dialog
-        const dialogRef = this.dialog.open(ExecutionLogComponent, {
-          width: '600px',
-          height: '500px',
-        });
-
-        // Establish WebSocket connection after the dialog opens
-        dialogRef.afterOpened().subscribe(() => {
-          this.wsService.connect(this.pair);
-        });
-
-        // Disconnect WebSocket when the dialog closes
-        dialogRef.afterClosed().subscribe(() => {
-          this.wsService.disconnect();
-        });
-      },
-      (error) => {
-        console.error('Error triggering inference:', error);
-      }
-    );
+    if (this.isInferenceRunning) {
+      // Inference is already running, just re-open the execution log dialog
+      this.dialog.open(ExecutionLogComponent, {
+        width: '600px',
+        height: '500px',
+        data: { pair: this.pair }, // Pass the pair to the dialog
+      });
+    } else {
+      // Set the flag
+      this.isInferenceRunning = true;
+      // Trigger the inference endpoint with the correct pair
+      this.chartDataService.triggerInference(this.pair).subscribe(
+        (response) => {
+          console.log('Inference triggered successfully:', response);
+          // Open the execution log dialog with the pair data
+          this.dialog.open(ExecutionLogComponent, {
+            width: '600px',
+            height: '500px',
+            data: { pair: this.pair }, // Pass the pair to the dialog
+          });
+        },
+        (error) => {
+          console.error('Error triggering inference:', error);
+          this.isInferenceRunning = false;
+        }
+      );
+    }
   }
 
   /**

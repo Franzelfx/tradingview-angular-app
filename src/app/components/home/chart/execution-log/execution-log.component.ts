@@ -1,8 +1,6 @@
-// src/app/components/execution-log/execution-log.component.ts
-
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject } from '@angular/core';
 import { WebSocketService } from '../../../../services/web-socket.service';
-import { MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -13,13 +11,19 @@ import { Subscription } from 'rxjs';
 export class ExecutionLogComponent implements OnInit, OnDestroy {
   logMessages: string[] = [];
   private logSubscription: Subscription = new Subscription();
+  pair: string = '';
 
   constructor(
     private wsService: WebSocketService,
-    private dialogRef: MatDialogRef<ExecutionLogComponent>
-  ) {}
+    private dialogRef: MatDialogRef<ExecutionLogComponent>,
+    @Inject(MAT_DIALOG_DATA) public data: any // Inject dialog data
+  ) {
+    this.pair = data.pair; // Assign the passed pair
+  }
 
   ngOnInit(): void {
+    // Connect to WebSocket with the received pair
+    this.wsService.connect(this.pair);
     // Subscribe to log messages
     this.logSubscription = this.wsService.getLogMessages().subscribe(
       (message) => {
@@ -34,7 +38,7 @@ export class ExecutionLogComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     // Unsubscribe to prevent memory leaks
     this.logSubscription.unsubscribe();
-    // Optionally, disconnect the WebSocket if no longer needed
+    // Disconnect the WebSocket
     this.wsService.disconnect();
   }
 

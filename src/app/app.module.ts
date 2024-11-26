@@ -19,6 +19,7 @@ import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { HomeComponent } from './components/home/home.component';
 import { ExecutionLogComponent } from './components/home/chart/execution-log/execution-log.component';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 @NgModule({
   declarations: [
@@ -30,7 +31,7 @@ import { MatDialog, MatDialogModule } from '@angular/material/dialog';
     HomeComponent,
     ExecutionLogComponent,
   ],
-  imports: [BrowserModule, HttpClientModule, FormsModule, AppRoutingModule, MatDialogModule],
+  imports: [BrowserModule, HttpClientModule, FormsModule, AppRoutingModule, MatDialogModule, BrowserAnimationsModule],
   providers: [
     {
       provide: HTTP_INTERCEPTORS, // Register the AuthInterceptor

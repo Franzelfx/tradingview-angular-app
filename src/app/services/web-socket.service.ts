@@ -1,5 +1,3 @@
-// src/app/services/web-socket.service.ts
-
 import { Injectable } from '@angular/core';
 import { Subject, Observable } from 'rxjs';
 import { environment } from 'src/environments/environment';
@@ -8,60 +6,81 @@ import { environment } from 'src/environments/environment';
   providedIn: 'root',
 })
 export class WebSocketService {
-  private ws: WebSocket | null = null;
-  private logSubject = new Subject<string>();
+  private logMessagesSubject = new Subject<string>();
+  private inferenceCompleteSubject = new Subject<string>();
+  private websocket: WebSocket | undefined;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private reconnectInterval = 5000; // 5 seconds
 
-  private apiUrl = environment.apiUrlWs;
-
-  /**
-   * Establishes a WebSocket connection to the server.
-   * @param pair The trading pair for which to stream logs.
-   */
   connect(pair: string): void {
-    // Ensure no existing connection
-    if (this.ws) {
-      this.ws.close();
-    }
+    const wsUrl = `${environment.apiUrlWs}/${pair}`;
+    console.log(`[WebSocketService] Connecting to: ${wsUrl}`);
+    this.websocket = new WebSocket(wsUrl);
 
-    // Establish WebSocket connection for the specific pair
-    this.ws = new WebSocket(
-      `${this.apiUrl}/logs`
-    );
-
-    this.ws.onopen = () => {
-      console.log('WebSocket connection opened');
-      // Optionally, send a message to specify the pair if needed
-      // this.ws?.send(JSON.stringify({ pair }));
+    this.websocket.onopen = () => {
+      console.log(
+        `[WebSocketService] Connected to WebSocket for pair: ${pair}`
+      );
+      this.reconnectAttempts = 0; // Reset reconnect attempts
     };
 
-    this.ws.onmessage = (event) => {
-      // Send incoming log messages to subscribers
-      this.logSubject.next(event.data);
+    this.websocket.onmessage = (event) => {
+      const message = event.data;
+      this.logMessagesSubject.next(message);
+
+      // Check if the message indicates inference completion
+      if (message.includes('Inference completed for pair')) {
+        const match = message.match(/Inference completed for pair (\w+)/);
+        if (match && match[1]) {
+          const pairName = match[1];
+          this.inferenceCompleteSubject.next(pairName);
+        }
+      }
     };
 
-    this.ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+    this.websocket.onclose = (event) => {
+      console.warn(`[WebSocketService] WebSocket closed:`, event);
+      this.reconnect(pair);
     };
 
-    this.ws.onclose = () => {
-      console.log('WebSocket connection closed');
+    this.websocket.onerror = (event) => {
+      console.error(`[WebSocketService] WebSocket error:`, event);
+      if (!environment.production) {
+        console.error('WebSocket error details:', event);
+      }
     };
   }
 
-  /**
-   * Closes the current WebSocket connection.
-   */
-  disconnect(): void {
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
+  private reconnect(pair: string): void {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++;
+      console.log(
+        `[WebSocketService] Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`
+      );
+      setTimeout(() => {
+        this.connect(pair);
+      }, this.reconnectInterval);
+    } else {
+      console.error(
+        `[WebSocketService] Maximum reconnect attempts reached. WebSocket not connected.`
+      );
     }
   }
 
-  /**
-   * Returns an observable stream of log messages.
-   */
   getLogMessages(): Observable<string> {
-    return this.logSubject.asObservable();
+    return this.logMessagesSubject.asObservable();
+  }
+
+  getInferenceComplete(): Observable<string> {
+    return this.inferenceCompleteSubject.asObservable();
+  }
+
+  disconnect(): void {
+    if (this.websocket) {
+      console.log('[WebSocketService] Disconnecting WebSocket...');
+      this.websocket.close();
+      this.websocket = undefined;
+    }
   }
 }
