@@ -1,4 +1,5 @@
 <!-- src/app/components/login/login.component.html -->
+
 <div class="page">
   <div
     class="container"
@@ -7,6 +8,50 @@
       'password-reset-active': isPasswordReset || isPasswordResetConfirm
     }"
   >
+    <!-- Sign In Form -->
+    <div
+      class="form-container sign-in-container"
+      *ngIf="!isSignUp && !isPasswordReset && !isPasswordResetConfirm && !verificationMessage && !verificationError"
+    >
+      <form (ngSubmit)="onSignInSubmit()" #signInForm="ngForm">
+        <h1>Sign in</h1>
+        <div class="social-container">
+          <a (click)="loginWithFacebook()" class="social"
+            ><i class="fab fa-facebook-f"></i
+          ></a>
+          <a (click)="loginWithGoogle()" class="social"
+            ><i class="fab fa-google-plus-g"></i
+          ></a>
+          <a class="social"><i class="fab fa-linkedin-in"></i></a>
+        </div>
+        <span>or use your account</span>
+        <input
+          type="email"
+          placeholder="Email"
+          required
+          [(ngModel)]="username"
+          name="username"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          required
+          [(ngModel)]="password"
+          name="password"
+        />
+        <a (click)="onForgotPassword()" style="cursor: pointer;"
+          >Forgot your password?</a
+        >
+        <button [disabled]="signInForm.invalid">Sign In</button>
+        <div *ngIf="loginError" class="error">
+          {{ loginError }}
+        </div>
+        <div *ngIf="loginSuccessMessage" class="success">
+          {{ loginSuccessMessage }}
+        </div>
+      </form>
+    </div>
+
     <!-- Sign Up Form -->
     <div
       class="form-container sign-up-container"
@@ -14,6 +59,15 @@
     >
       <form (ngSubmit)="onSignUpSubmit()" #signUpForm="ngForm">
         <h1>Create Account</h1>
+        <div class="social-container">
+          <a (click)="loginWithFacebook()" class="social"
+            ><i class="fab fa-facebook-f"></i
+          ></a>
+          <a (click)="loginWithGoogle()" class="social"
+            ><i class="fab fa-google-plus-g"></i
+          ></a>
+          <a class="social"><i class="fab fa-linkedin-in"></i></a>
+        </div>
         <span>or use your email for registration</span>
         <input
           type="text"
@@ -42,41 +96,6 @@
         </div>
         <div *ngIf="signupSuccessMessage" class="success">
           {{ signupSuccessMessage }}
-        </div>
-      </form>
-    </div>
-
-    <!-- Sign In Form -->
-    <div
-      class="form-container sign-in-container"
-      *ngIf="!isSignUp && !isPasswordReset && !isPasswordResetConfirm && !verificationMessage && !verificationError"
-    >
-      <form (ngSubmit)="onSignInSubmit()" #signInForm="ngForm">
-        <h1>Sign in</h1>
-        <span>or use your account</span>
-        <input
-          type="email"
-          placeholder="Email"
-          required
-          [(ngModel)]="username"
-          name="username"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          required
-          [(ngModel)]="password"
-          name="password"
-        />
-        <a (click)="onForgotPassword()" style="cursor: pointer;"
-          >Forgot your password?</a
-        >
-        <button [disabled]="signInForm.invalid">Sign In</button>
-        <div *ngIf="loginError" class="error">
-          {{ loginError }}
-        </div>
-        <div *ngIf="loginSuccessMessage" class="success">
-          {{ loginSuccessMessage }}
         </div>
       </form>
     </div>
@@ -169,12 +188,12 @@
       </form>
     </div>
 
-<!-- Overlay Panels -->
+    <!-- Overlay Panels -->
     <div class="overlay-container">
       <div class="overlay">
         <!-- Overlay for Sign Up -->
         <div
-          class="overlay-panel overlay-left"
+          class="overlay-panel overlay-right"
           *ngIf="!isSignUp && !isPasswordReset && !isPasswordResetConfirm && !verificationMessage && !verificationError"
         >
           <h1>Hello, Friend!</h1>
@@ -183,7 +202,7 @@
         </div>
         <!-- Overlay for Sign In -->
         <div
-          class="overlay-panel overlay-right"
+          class="overlay-panel overlay-left"
           *ngIf="isSignUp && !isPasswordReset && !isPasswordResetConfirm && !verificationMessage && !verificationError"
         >
           <h1>Welcome Back!</h1>

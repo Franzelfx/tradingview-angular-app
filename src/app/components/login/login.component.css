@@ -1,3 +1,5 @@
+/* src/app/components/login/login.component.css */
+
 /* General Styles */
 * {
     box-sizing: border-box;
@@ -92,6 +94,25 @@ button.ghost {
     color: #ffffff;
 }
 
+.social-container {
+    margin: 20px 0;
+}
+
+.social {
+    border: 1px solid #dddddd;
+    border-radius: 50%;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 5px;
+    height: 40px;
+    width: 40px;
+}
+
+.social i {
+    color: var(--color-text);
+}
+
 form {
     background-color: var(--color-main-bg);
     display: flex;
@@ -165,6 +186,19 @@ input::placeholder {
     z-index: 5;
 }
 
+/* Password Reset Containers */
+.password-reset-container,
+.password-reset-confirm-container,
+.verification-container {
+    left: 0;
+    width: 100%;
+    z-index: 3;
+}
+
+.container.password-reset-active .overlay-container {
+    display: none;
+}
+
 /* Overlay Containers */
 .overlay-container {
     position: absolute;
@@ -214,7 +248,8 @@ input::placeholder {
 }
 
 .overlay-left {
-    transform: translateX(-20%);
+    left: 0;
+    transform: translateX(-100%);
 }
 
 .container.right-panel-active .overlay-left {
@@ -227,7 +262,7 @@ input::placeholder {
 }
 
 .container.right-panel-active .overlay-right {
-    transform: translateX(20%);
+    transform: translateX(100%);
 }
 
 /* Responsive Design */

@@ -14,7 +14,7 @@ export class LoginComponent implements OnInit {
   username: string = '';
   password: string = '';
   loginError: string = '';
-  loginSuccessMessage: string = ''; // To display success messages on sign-in form
+  loginSuccessMessage: string = '';
 
   // Sign-up form properties
   signupName: string = '';
@@ -51,21 +51,22 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    const params = this.route.snapshot.queryParams;
+
     // Initialize form states
-    this.isSignUp = false;
-    this.isPasswordReset = false;
+    this.isSignUp = params['signUp'] === 'true';
+    this.isPasswordReset = params['reset'] === 'true';
     this.isPasswordResetConfirm = false;
 
     // Initialize verification messages
     this.verificationMessage = '';
     this.verificationError = '';
 
-    // Handle query params
-    const params = this.route.snapshot.queryParams;
     if (params['token']) {
       this.isPasswordResetConfirm = true;
       this.resetToken = params['token'];
     }
+
     if (params['verify']) {
       this.handleEmailVerification(params['verify']);
     }
@@ -77,6 +78,8 @@ export class LoginComponent implements OnInit {
     this.isPasswordReset = false;
     this.isPasswordResetConfirm = false;
     this.clearMessages();
+    // Update URL without query params
+    this.router.navigate([], { queryParams: {} });
   }
 
   // Toggle to Sign Up form
@@ -85,6 +88,8 @@ export class LoginComponent implements OnInit {
     this.isPasswordReset = false;
     this.isPasswordResetConfirm = false;
     this.clearMessages();
+    // Update URL with signUp query param
+    this.router.navigate([], { queryParams: { signUp: true } });
   }
 
   // Toggle to Password Reset form
@@ -92,9 +97,9 @@ export class LoginComponent implements OnInit {
     this.isSignUp = false;
     this.isPasswordReset = true;
     this.isPasswordResetConfirm = false;
-
-    // Clear messages
     this.clearMessages();
+    // Update URL with reset query param
+    this.router.navigate([], { queryParams: { reset: true } });
   }
 
   // Handle Sign In form submission
