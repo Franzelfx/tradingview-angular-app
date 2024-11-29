@@ -1,13 +1,27 @@
 <!-- src/app/components/login/login.component.html -->
+
 <div class="page">
-  <div class="container" [ngClass]="{'right-panel-active': isSignUp}">
+  <div
+    class="container"
+    [ngClass]="{
+      'right-panel-active': isSignUp,
+      'password-reset-active': isPasswordReset
+    }"
+  >
     <!-- Sign Up Form -->
-    <div class="form-container sign-up-container">
+    <div
+      class="form-container sign-up-container"
+      *ngIf="!isPasswordReset"
+    >
       <form (ngSubmit)="onSignUpSubmit()" #signUpForm="ngForm">
         <h1>Create Account</h1>
         <div class="social-container">
-          <a (click)="loginWithFacebook()" class="social"><i class="fab fa-facebook-f"></i></a>
-          <a (click)="loginWithGoogle()" class="social"><i class="fab fa-google-plus-g"></i></a>
+          <a (click)="loginWithFacebook()" class="social"
+            ><i class="fab fa-facebook-f"></i
+          ></a>
+          <a (click)="loginWithGoogle()" class="social"
+            ><i class="fab fa-google-plus-g"></i
+          ></a>
           <a class="social"><i class="fab fa-linkedin-in"></i></a>
         </div>
         <span>or use your email for registration</span>
@@ -33,16 +47,29 @@
           name="signupPassword"
         />
         <button [disabled]="signUpForm.invalid">Sign Up</button>
+        <div *ngIf="signupError" class="error">
+          {{ signupError }}
+        </div>
+        <div *ngIf="signupSuccessMessage" class="success">
+          {{ signupSuccessMessage }}
+        </div>
       </form>
     </div>
 
     <!-- Sign In Form -->
-    <div class="form-container sign-in-container">
+    <div
+      class="form-container sign-in-container"
+      *ngIf="!isSignUp && !isPasswordReset"
+    >
       <form (ngSubmit)="onSignInSubmit()" #signInForm="ngForm">
         <h1>Sign in</h1>
         <div class="social-container">
-          <a (click)="loginWithFacebook()" class="social"><i class="fab fa-facebook-f"></i></a>
-          <a (click)="loginWithGoogle()" class="social"><i class="fab fa-google-plus-g"></i></a>
+          <a (click)="loginWithFacebook()" class="social"
+            ><i class="fab fa-facebook-f"></i
+          ></a>
+          <a (click)="loginWithGoogle()" class="social"
+            ><i class="fab fa-google-plus-g"></i
+          ></a>
           <a class="social"><i class="fab fa-linkedin-in"></i></a>
         </div>
         <span>or use your account</span>
@@ -60,10 +87,38 @@
           [(ngModel)]="password"
           name="password"
         />
-        <a href="#">Forgot your password?</a>
+        <a href="#" (click)="onForgotPassword()">Forgot your password?</a>
         <button [disabled]="signInForm.invalid">Sign In</button>
-        <div *ngIf="loginFailed" class="error">
-          Invalid username or password.
+        <div *ngIf="loginError" class="error">
+          {{ loginError }}
+        </div>
+      </form>
+    </div>
+
+    <!-- Password Reset Form -->
+    <div
+      class="form-container password-reset-container"
+      *ngIf="isPasswordReset"
+    >
+      <form (ngSubmit)="onPasswordResetSubmit($event)" #passwordResetForm="ngForm">
+        <h1>Reset Password</h1>
+        <span>Enter your email address to reset your password</span>
+        <input
+          type="email"
+          placeholder="Email"
+          required
+          [(ngModel)]="resetEmail"
+          name="resetEmail"
+        />
+        <button type="submit" [disabled]="passwordResetForm.invalid">
+          Reset Password
+        </button>
+        <a href="#" (click)="onSignInClick()">Back to Sign In</a>
+        <div *ngIf="resetMessage" class="success">
+          {{ resetMessage }}
+        </div>
+        <div *ngIf="resetError" class="error">
+          {{ resetError }}
         </div>
       </form>
     </div>
@@ -72,16 +127,22 @@
     <div class="overlay-container">
       <div class="overlay">
         <!-- Overlay for Sign In -->
-        <div class="overlay-panel overlay-left">
+        <div class="overlay-panel overlay-left" *ngIf="!isPasswordReset">
           <h1>Welcome Back!</h1>
           <p>To keep connected with us please login with your personal info</p>
           <button class="ghost" (click)="onSignInClick()">Sign In</button>
         </div>
         <!-- Overlay for Sign Up -->
-        <div class="overlay-panel overlay-right">
+        <div class="overlay-panel overlay-right" *ngIf="!isPasswordReset">
           <h1>Hello, Friend!</h1>
           <p>Enter your personal details and start your journey with us</p>
           <button class="ghost" (click)="onSignUpClick()">Sign Up</button>
+        </div>
+        <!-- Overlay for Password Reset -->
+        <div class="overlay-panel overlay-left" *ngIf="isPasswordReset">
+          <h1>Reset Your Password</h1>
+          <p>We will send you an email to reset your password</p>
+          <button class="ghost" (click)="onSignInClick()">Back to Sign In</button>
         </div>
       </div>
     </div>

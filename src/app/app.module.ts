@@ -20,6 +20,7 @@ import { HomeComponent } from './components/home/home.component';
 import { ExecutionLogComponent } from './components/home/chart/execution-log/execution-log.component';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { PasswordResetComponent } from './components/password-reset/password-reset.component';
 
 @NgModule({
   declarations: [
@@ -30,6 +31,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     LoginComponent,
     HomeComponent,
     ExecutionLogComponent,
+    PasswordResetComponent,
   ],
   imports: [BrowserModule, HttpClientModule, FormsModule, AppRoutingModule, MatDialogModule, BrowserAnimationsModule],
   providers: [

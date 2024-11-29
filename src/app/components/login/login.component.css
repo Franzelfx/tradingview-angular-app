@@ -49,6 +49,12 @@ a {
     margin-top: 5px;
 }
 
+.success {
+    color: #28a745;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
 button {
     border-radius: 20px;
     border: 1px solid var(--color-button-hover);
@@ -140,6 +146,40 @@ input::placeholder {
     width: 50%;
     opacity: 0;
     z-index: 1;
+}
+
+/* Password Reset Container */
+.password-reset-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 50%;
+    height: 100%;
+    z-index: 5;
+    opacity: 1;
+    transition: transform 0.6s ease-in-out;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container.password-reset-active .password-reset-container {
+    transform: translateX(0%);
+}
+
+.container.password-reset-active .sign-in-container {
+    transform: translateX(-100%);
+    opacity: 0;
+    z-index: 1;
+}
+
+/* Ensure the overlay doesn't interfere */
+.container.password-reset-active .overlay-container {
+    transform: translateX(100%);
+}
+
+.container.password-reset-active .overlay-right {
+    display: none;
 }
 
 .container.right-panel-active .sign-up-container {

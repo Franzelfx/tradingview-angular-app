@@ -4,35 +4,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
 @import '~@angular/material/prebuilt-themes/indigo-pink.css';
 
-/* Define CSS Variables for Light and Dark Themes */
+/* Define CSS Variables for Dark Theme as Default */
 :root {
-    /* Light Theme Colors */
-    --color-background: #f5f5f5;
-    --color-text: #333333;
-    --color-header-bg: #f5f5f5;
-    --color-header-text: #333333;
-    /* Sidebar Colors */
-    --color-sidebar-bg: #f0f0f0;
-    --color-sidebar-text: #333333;
-    --color-sidebar-hover: #ddd;
-    --color-main-bg: #ffffff;
-    --color-main-text: #333333;
-    --color-chart-bg: #fafafa;
-    --color-chart-border: #ccc;
-    --color-button-hover: #4caf50;
-    /* Sidebar Width Variables */
-    --sidebar-width: 150px;
-    --sidebar-width-medium: 130px;
-    --sidebar-width-small: 100px;
-
-    /* Gradient Variables for Light Theme */
-    --login-bg-gradient: linear-gradient(90deg,
-            #002438 0%,
-            #340979 37%,
-            rgba(0, 212, 255, 1) 94%);
-}
-
-body.dark-mode {
     /* Dark Theme Colors */
     --color-background: #121212;
     --color-text: #e0e0e0;
@@ -47,7 +20,7 @@ body.dark-mode {
     --color-chart-bg: #2c2c2c;
     --color-chart-border: #555;
     --color-button-hover: #4caf50;
-    /* Sidebar Width Variables for Dark Mode */
+    /* Sidebar Width Variables */
     --sidebar-width: 150px;
     --sidebar-width-medium: 130px;
     --sidebar-width-small: 100px;
@@ -56,6 +29,34 @@ body.dark-mode {
     --login-bg-gradient: linear-gradient(90deg,
             #1e1e1e 0%,
             #555555 37%,
+            rgba(0, 212, 255, 1) 94%);
+}
+
+/* Define CSS Variables for Light Theme under a class */
+body.light-mode {
+    /* Light Theme Colors */
+    --color-background: #f5f5f5;
+    --color-text: #333333;
+    --color-header-bg: #f5f5f5;
+    --color-header-text: #333333;
+    /* Sidebar Colors */
+    --color-sidebar-bg: #f0f0f0;
+    --color-sidebar-text: #333333;
+    --color-sidebar-hover: #ddd;
+    --color-main-bg: #ffffff;
+    --color-main-text: #333333;
+    --color-chart-bg: #fafafa;
+    --color-chart-border: #ccc;
+    --color-button-hover: #4caf50;
+    /* Sidebar Width Variables for Light Mode */
+    --sidebar-width: 150px;
+    --sidebar-width-medium: 130px;
+    --sidebar-width-small: 100px;
+
+    /* Gradient Variables for Light Theme */
+    --login-bg-gradient: linear-gradient(90deg,
+            #002438 0%,
+            #340979 37%,
             rgba(0, 212, 255, 1) 94%);
 }
 

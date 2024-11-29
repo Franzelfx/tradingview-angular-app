@@ -1,51 +1,86 @@
-// src/app/components/login/login.component.ts
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
+import { Router, ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
 })
-export class LoginComponent {
+export class LoginComponent implements OnInit {
   // Sign-in form properties
   username: string = '';
   password: string = '';
-  loginFailed: boolean = false;
+  loginError: string = '';
 
   // Sign-up form properties
   signupName: string = '';
   signupEmail: string = '';
   signupPassword: string = '';
+  signupError: string = '';
+  signupSuccessMessage: string = '';
 
-  // Control which panel is active
+  // Password reset form properties
+  resetEmail: string = '';
+  resetError: string = '';
+  resetMessage: string = '';
+
+  // Control which form is displayed
   isSignUp: boolean = false;
+  isPasswordReset: boolean = false;
 
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router,
+    private route: ActivatedRoute
+  ) {}
+
+  ngOnInit(): void {
+    // Read query parameters to restore state
+    this.route.queryParams.subscribe((params) => {
+      this.isSignUp = params['signUp'] === 'true';
+      this.isPasswordReset = params['reset'] === 'true';
+    });
+  }
 
   // Toggle to Sign In form
   onSignInClick(): void {
     this.isSignUp = false;
+    this.isPasswordReset = false;
+    this.router.navigate([], { queryParams: {} }); // Clear query params
   }
 
   // Toggle to Sign Up form
   onSignUpClick(): void {
     this.isSignUp = true;
+    this.isPasswordReset = false;
+    this.router.navigate([], { queryParams: { signUp: true } });
+  }
+
+  // Toggle to Password Reset form
+  onForgotPassword(): void {
+    this.isSignUp = false;
+    this.isPasswordReset = true;
+    this.router.navigate([], { queryParams: { reset: true } });
   }
 
   // Handle Sign In form submission
   async onSignInSubmit(): Promise<void> {
     if (this.username && this.password) {
       try {
-        const success = await this.authService.login(
+        const errorMessage = await this.authService.login(
           this.username,
           this.password
         );
-        this.loginFailed = !success;
-        // Navigate to another page if login is successful
+        if (errorMessage) {
+          this.loginError = errorMessage;
+        } else {
+          this.loginError = '';
+          this.router.navigate(['/']);
+        }
       } catch (error) {
         console.error('Login error:', error);
-        this.loginFailed = true;
+        this.loginError = 'An unexpected error occurred during login.';
       }
     }
   }
@@ -54,22 +89,58 @@ export class LoginComponent {
   async onSignUpSubmit(): Promise<void> {
     if (this.signupName && this.signupEmail && this.signupPassword) {
       try {
-        // Implement sign-up functionality
-        // e.g., await this.authService.signup(this.signupName, this.signupEmail, this.signupPassword);
-        // After successful sign-up, you might want to log the user in or navigate to another page
+        const errorMessage = await this.authService.register(
+          this.signupName,
+          this.signupEmail,
+          this.signupPassword
+        );
+        if (errorMessage) {
+          this.signupError = errorMessage;
+          this.signupSuccessMessage = '';
+        } else {
+          this.signupError = '';
+          this.signupSuccessMessage =
+            'Registration successful. Please check your email to verify your account.';
+        }
       } catch (error) {
         console.error('Sign-up error:', error);
-        // Handle sign-up errors
+        this.signupError = 'An unexpected error occurred during registration.';
+        this.signupSuccessMessage = '';
       }
     }
   }
 
-  // Social login methods
+  // Handle Password Reset form submission
+  async onPasswordResetSubmit(event: Event): Promise<void> {
+    event.preventDefault(); // Prevent default form submission behavior
+    if (this.resetEmail) {
+      try {
+        const errorMessage = await this.authService.requestPasswordReset(
+          this.resetEmail
+        );
+        if (errorMessage) {
+          this.resetError = errorMessage;
+          this.resetMessage = '';
+        } else {
+          this.resetError = '';
+          this.resetMessage =
+            'Password reset email sent. Please check your inbox.';
+        }
+      } catch (error) {
+        console.error('Password reset request error:', error);
+        this.resetError =
+          'Failed to send password reset email. Please try again.';
+        this.resetMessage = '';
+      }
+    }
+  }
+
+  // Social login methods (optional)
   loginWithGoogle(): void {
-    // Implement Google login
+    // Implement Google login functionality here
   }
 
   loginWithFacebook(): void {
-    // Implement Facebook login
+    // Implement Facebook login functionality here
   }
 }
