@@ -1,5 +1,3 @@
-// src/app/components/login/login.component.ts
-
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { Router, ActivatedRoute } from '@angular/router';
