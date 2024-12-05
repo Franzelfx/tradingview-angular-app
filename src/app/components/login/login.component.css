@@ -159,32 +159,46 @@ input::placeholder {
     transition: all 0.6s ease-in-out;
 }
 
+/* Sign In Form */
 .sign-in-container {
-    left: 0;
-    width: 50%;
-    z-index: 2;
-    transform: translateX(0);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  z-index: 2;
+  transition: all 0.6s ease-in-out;
+  transform: translateX(0%);
+  opacity: 1;
 }
 
+/* Sign Up Form */
 .sign-up-container {
+    position: absolute;
+    top: 0;
     left: 0;
     width: 50%;
+    height: 100%;
     z-index: 1;
+    transition: all 0.6s ease-in-out;
+    transform: translateX(0%);
+    /* Move farther to the right */
     opacity: 0;
-    transform: translateX(100%);
 }
 
+/* Active State */
 .container.right-panel-active .sign-in-container {
-    transform: translateX(100%);
-    opacity: 0;
-    z-index: 1;
+  transform: translateX(-100%);
+  opacity: 0;
+  z-index: 1;
 }
 
 .container.right-panel-active .sign-up-container {
-    transform: translateX(0%);
-    opacity: 1;
-    z-index: 5;
+  transform: translateX(100%);
+  opacity: 1;
+  z-index: 2;
 }
+
 
 /* Password Reset Containers */
 .password-reset-container,

@@ -49,25 +49,24 @@ export class LoginComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    const params = this.route.snapshot.queryParams;
+    this.route.queryParams.subscribe((params) => {
+      // Update form states based on query params
+      this.isSignUp = params['signUp'] === 'true';
+      this.isPasswordReset = params['reset'] === 'true';
+      this.isPasswordResetConfirm = false;
 
-    // Initialize form states
-    this.isSignUp = params['signUp'] === 'true';
-    this.isPasswordReset = params['reset'] === 'true';
-    this.isPasswordResetConfirm = false;
+      // Clear any existing messages
+      this.clearMessages();
 
-    // Initialize verification messages
-    this.verificationMessage = '';
-    this.verificationError = '';
+      if (params['token']) {
+        this.isPasswordResetConfirm = true;
+        this.resetToken = params['token'];
+      }
 
-    if (params['token']) {
-      this.isPasswordResetConfirm = true;
-      this.resetToken = params['token'];
-    }
-
-    if (params['verify']) {
-      this.handleEmailVerification(params['verify']);
-    }
+      if (params['verify']) {
+        this.handleEmailVerification(params['verify']);
+      }
+    });
   }
 
   // Toggle to Sign In form
@@ -81,13 +80,16 @@ export class LoginComponent implements OnInit {
   }
 
   // Toggle to Sign Up form
+  // Optionally, remove navigation in click handlers
   onSignUpClick(): void {
     this.isSignUp = true;
     this.isPasswordReset = false;
     this.isPasswordResetConfirm = false;
     this.clearMessages();
-    // Update URL with signUp query param
-    this.router.navigate([], { queryParams: { signUp: true } });
+    // Log the state of the form in the URL
+    console.log('Sign-up form displayed');
+    // Remove or comment out the navigation
+    // this.router.navigate([], { queryParams: { signUp: true } });
   }
 
   // Toggle to Password Reset form

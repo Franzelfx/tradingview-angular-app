@@ -183,31 +183,20 @@
     <!-- Overlay Panels -->
     <div class="overlay-container">
       <div class="overlay">
-        <!-- Overlay for Sign Up -->
+        <!-- Overlay for Sign In -->
         <div
           class="overlay-panel overlay-right"
-          *ngIf="
-            !isSignUp &&
-            !isPasswordReset &&
-            !isPasswordResetConfirm &&
-            !verificationMessage &&
-            !verificationError
-          "
+          *ngIf="!isSignUp && !isPasswordReset && !isPasswordResetConfirm"
         >
           <h1>Hello, Friend!</h1>
           <p>Don't have an account yet? Sign up now!</p>
           <button class="ghost" (click)="onSignUpClick()">Sign Up</button>
         </div>
-        <!-- Overlay for Sign In -->
+
+        <!-- Overlay for Sign Up -->
         <div
           class="overlay-panel overlay-left"
-          *ngIf="
-            isSignUp &&
-            !isPasswordReset &&
-            !isPasswordResetConfirm &&
-            !verificationMessage &&
-            !verificationError
-          "
+          *ngIf="isSignUp && !isPasswordReset && !isPasswordResetConfirm"
         >
           <h1>Welcome Back!</h1>
           <p>Already have an account? Sign in here!</p>
