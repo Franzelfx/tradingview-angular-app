@@ -21,6 +21,7 @@ import { ExecutionLogComponent } from './components/home/chart/execution-log/exe
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { PasswordResetComponent } from './components/password-reset/password-reset.component';
+import { AuthModule } from '@auth0/auth0-angular';
 
 @NgModule({
   declarations: [
@@ -33,7 +34,21 @@ import { PasswordResetComponent } from './components/password-reset/password-res
     ExecutionLogComponent,
     PasswordResetComponent,
   ],
-  imports: [BrowserModule, HttpClientModule, FormsModule, AppRoutingModule, MatDialogModule, BrowserAnimationsModule],
+  imports: [
+    BrowserModule,
+    HttpClientModule,
+    FormsModule,
+    AppRoutingModule,
+    MatDialogModule,
+    BrowserAnimationsModule,
+    AuthModule.forRoot({
+      domain: 'dev-mfwwo0cbjxx7h6of.us.auth0.com',
+      clientId: 'GWune1Mzn80V42cTUrSYprKSmuHQbyMY',
+      authorizationParams: {
+        redirect_uri: window.location.origin, // Use redirect_uri here
+      },
+    }),
+  ],
   providers: [
     {
       provide: HTTP_INTERCEPTORS, // Register the AuthInterceptor

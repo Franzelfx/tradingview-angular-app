@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { Router, ActivatedRoute } from '@angular/router';
+import { AuthService as Auth0Service } from '@auth0/auth0-angular';
 
 @Component({
   selector: 'app-login',
@@ -45,8 +46,15 @@ export class LoginComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private router: Router,
-    private route: ActivatedRoute
-  ) {}
+    private route: ActivatedRoute,
+    public auth0Service: Auth0Service
+  ) {
+      try {
+        console.log('Auth0Service initialized:', auth0Service);
+      } catch (error) {
+        console.error('Error initializing Auth0Service:', error);
+      }
+  }
 
   ngOnInit(): void {
     this.route.queryParams.subscribe((params) => {
@@ -245,12 +253,27 @@ export class LoginComponent implements OnInit {
     this.verificationMessage = '';
   }
 
-  // Social login methods (optional)
   loginWithGoogle(): void {
-    // Implement Google login functionality here
+    this.auth0Service.loginWithRedirect({
+      authorizationParams: { connection: 'google-oauth2' },
+    });
+  }
+
+  loginWithGitHub(): void {
+    this.auth0Service.loginWithRedirect({
+      authorizationParams: { connection: 'github' },
+    });
+  }
+
+  loginWithLinkedIn(): void {
+    this.auth0Service.loginWithRedirect({
+      authorizationParams: { connection: 'linkedin' },
+    });
   }
 
   loginWithFacebook(): void {
-    // Implement Facebook login functionality here
+    this.auth0Service.loginWithRedirect({
+      authorizationParams: { connection: 'facebook' },
+    });
   }
 }
