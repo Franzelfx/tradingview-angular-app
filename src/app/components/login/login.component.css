@@ -47,18 +47,22 @@ a {
 
 .error {
     color: #ff6b6b;
-    font-size: 12px;
-    margin-top: 5px;
+    background-color: #ffecec;
+    border: 1px solid #ff6b6b;
+    font-size: 14px;
+    padding: 10px;
+    border-radius: 4px;
+    margin-top: 10px;
 }
 
 .success {
     color: #155724;
     background-color: #d4edda;
     border: 1px solid #c3e6cb;
-    font-size: 12px;
-    margin-top: 5px;
+    font-size: 14px;
     padding: 10px;
     border-radius: 4px;
+    margin-top: 10px;
 }
 
 button {
@@ -205,7 +209,7 @@ input::placeholder {
 .password-reset-confirm-container,
 .verification-container {
     left: 0;
-    width: 100%;
+    width: 50%;
     z-index: 3;
 }
 
@@ -279,6 +283,36 @@ input::placeholder {
     transform: translateX(100%);
 }
 
+.verification-complete-container {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    max-width: 400px;
+    background-color: var(--color-main-bg);
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25),
+        0 10px 10px rgba(0, 0, 0, 0.22);
+    z-index: 3;
+}
+
+.success-message {
+    color: #155724;
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    font-size: 14px;
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 4px;
+    text-align: center;
+}
+
 /* Responsive Design */
 @media screen and (max-width: 768px) {
     .container {
@@ -295,6 +329,6 @@ input::placeholder {
     .password-reset-container,
     .password-reset-confirm-container,
     .verification-container {
-        width: 100%;
+        width: 50%;
     }
 }

@@ -104,14 +104,24 @@ export class AuthService {
     newPassword: string
   ): Promise<string | null> {
     try {
+      const payload = {
+        token, // Ensure this matches the backend's schema
+        new_password: newPassword, // Ensure this matches the expected key
+      };
+
       const response = await this.http
-        .post<{ message: string }>(`${this.apiUrl}/auth/reset-password`, {
-          token,
-          new_password: newPassword,
-        })
+        .post<{ message: string }>(
+          `${this.apiUrl}/auth/reset-password`,
+          payload
+        )
         .toPromise();
 
-      return null;
+      if (response?.message === 'Password has been reset successfully') {
+        return null; // Success
+      }
+      return (
+        response?.message || 'Failed to reset the password. Please try again.'
+      );
     } catch (error) {
       console.error('Password reset failed:', error);
       if (error instanceof HttpErrorResponse && error.error?.detail) {
@@ -121,7 +131,7 @@ export class AuthService {
     }
   }
 
-  async verifyEmail(token: string): Promise<string | null> {
+  async verifyEmail(token: string): Promise<any> {
     try {
       const response = await this.http
         .get<{ message: string }>(`${this.apiUrl}/auth/verify-email`, {
@@ -129,13 +139,15 @@ export class AuthService {
         })
         .toPromise();
 
-      return null;
+      return response; // Return the full response for processing in the component
     } catch (error) {
       console.error('Email verification failed:', error);
       if (error instanceof HttpErrorResponse && error.error?.detail) {
-        return error.error.detail;
+        throw new Error(error.error.detail); // Pass the error to the component
       }
-      return 'An unexpected error occurred during email verification.';
+      throw new Error(
+        'An unexpected error occurred during email verification.'
+      );
     }
   }
 

@@ -85,12 +85,8 @@
           name="signupPassword"
         />
         <button [disabled]="signUpForm.invalid">Sign Up</button>
-        <div *ngIf="signupError" class="error">
-          {{ signupError }}
-        </div>
-        <div *ngIf="signupSuccessMessage" class="success">
-          {{ signupSuccessMessage }}
-        </div>
+        <div *ngIf="signupError" class="error">{{ signupError }}</div>
+        <div *ngIf="signupSuccessMessage" class="success">{{ signupSuccessMessage }}</div>
       </form>
     </div>
 
@@ -160,57 +156,41 @@
       </form>
       <div *ngIf="resetConfirmMessage" class="success">
         {{ resetConfirmMessage }}
+        <p>You will be redirected to the sign-in page shortly.</p>
       </div>
     </div>
 
-    <!-- Email Verification Message -->
-    <div
-      class="form-container verification-container"
-      *ngIf="verificationMessage || verificationError"
-    >
-      <form>
-        <h1>Email Verification</h1>
-        <div *ngIf="verificationMessage" class="success">
-          {{ verificationMessage }}
-        </div>
-        <div *ngIf="verificationError" class="error">
-          {{ verificationError }}
-        </div>
-        <button (click)="onSignInClick()">Go to Sign In</button>
-      </form>
+    <!-- Email Verification Complete Screen -->
+    <div class="form-container verification-complete-container" *ngIf="verificationComplete">
+      <h1>Registration Complete</h1>
+      <p class="success">{{ verificationMessage }}</p>
+      <button (click)="navigateToLogin()">Go to Login</button>
     </div>
 
     <!-- Overlay Panels -->
     <div class="overlay-container">
       <div class="overlay">
-        <!-- Overlay for Sign In -->
         <div
           class="overlay-panel overlay-right"
-          *ngIf="!isSignUp && !isPasswordReset && !isPasswordResetConfirm"
+          *ngIf="!isSignUp && !isPasswordReset && !isPasswordResetConfirm && !verificationComplete"
         >
           <h1>Hello, Friend!</h1>
           <p>Don't have an account yet? Sign up now!</p>
           <button class="ghost" (click)="onSignUpClick()">Sign Up</button>
         </div>
 
-        <!-- Overlay for Sign Up -->
         <div
           class="overlay-panel overlay-left"
-          *ngIf="isSignUp && !isPasswordReset && !isPasswordResetConfirm"
+          *ngIf="isSignUp && !isPasswordReset && !isPasswordResetConfirm && !verificationComplete"
         >
           <h1>Welcome Back!</h1>
           <p>Already have an account? Sign in here!</p>
           <button class="ghost" (click)="onSignInClick()">Sign In</button>
         </div>
-        <!-- Overlay for Password Reset -->
+
         <div
           class="overlay-panel overlay-left"
-          *ngIf="
-            isPasswordReset ||
-            isPasswordResetConfirm ||
-            verificationMessage ||
-            verificationError
-          "
+          *ngIf="(isPasswordReset || isPasswordResetConfirm || verificationMessage || verificationError) && !verificationComplete"
         >
           <h1>Need to Sign In?</h1>
           <p>Return to the sign-in page to access your account.</p>

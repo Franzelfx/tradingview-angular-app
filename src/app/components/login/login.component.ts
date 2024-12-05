@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../../services/auth.service';
 import { Router, ActivatedRoute } from '@angular/router';
-import { AuthService as Auth0Service } from '@auth0/auth0-angular';
+import { Injector } from '@angular/core';
 
 @Component({
   selector: 'app-login',
@@ -42,37 +42,53 @@ export class LoginComponent implements OnInit {
   // Control which form is displayed
   isSignUp: boolean = false;
   isPasswordReset: boolean = false;
+  verificationComplete: boolean = false; // State to show the confirmation screen
+
+  public auth0Service: any; // Declare Auth0Service dynamically
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
-    public auth0Service: Auth0Service
+    private injector: Injector // Use Angular Injector
   ) {
+    const isSecureOrigin =
+      window.location.protocol === 'https:' ||
+      window.location.hostname === 'localhost';
+
+    if (isSecureOrigin) {
       try {
-        console.log('Auth0Service initialized:', auth0Service);
+        // Dynamically resolve Auth0Service
+        this.auth0Service = this.injector.get('Auth0Service');
+        console.log('Auth0Service initialized:', this.auth0Service);
       } catch (error) {
         console.error('Error initializing Auth0Service:', error);
       }
+    } else {
+      console.warn(
+        'Auth0Service not initialized. Application must run on a secure origin (HTTPS or localhost).'
+      );
+    }
   }
 
   ngOnInit(): void {
     this.route.queryParams.subscribe((params) => {
-      // Update form states based on query params
+      console.log('Query params:', params); // Log the query params for debugging
+
       this.isSignUp = params['signUp'] === 'true';
       this.isPasswordReset = params['reset'] === 'true';
       this.isPasswordResetConfirm = false;
 
-      // Clear any existing messages
+      // Clear existing messages
       this.clearMessages();
 
-      if (params['token']) {
+      if (params['token'] && !params['reset']) {
+        console.log('Handling email verification...');
+        this.handleEmailVerification(params['token']);
+      } else if (params['token'] && params['reset']) {
+        console.log('Handling password reset...');
         this.isPasswordResetConfirm = true;
         this.resetToken = params['token'];
-      }
-
-      if (params['verify']) {
-        this.handleEmailVerification(params['verify']);
       }
     });
   }
@@ -143,9 +159,10 @@ export class LoginComponent implements OnInit {
           this.signupEmail,
           this.signupPassword
         );
+
         if (errorMessage) {
           this.signupError = errorMessage;
-          this.signupSuccessMessage = '';
+          this.signupSuccessMessage = ''; // Clear success message
         } else {
           this.signupError = '';
           this.signupSuccessMessage =
@@ -201,42 +218,40 @@ export class LoginComponent implements OnInit {
         this.resetConfirmMessage = '';
       } else {
         this.resetConfirmError = '';
-        this.resetConfirmMessage =
-          'Your password has been reset successfully. Please sign in.';
-        // Reset the component state to show the sign-in form
-        this.isPasswordResetConfirm = false;
-        this.isPasswordReset = false;
-        this.isSignUp = false;
-        this.newPassword = '';
-        this.confirmPassword = '';
-        this.resetToken = '';
-        // Display a success message on the sign-in form
-        this.loginSuccessMessage =
-          'Your password has been reset successfully. Please sign in.';
+        this.resetConfirmMessage = 'Your password has been reset successfully.';
       }
     } catch (error) {
       console.error('Password reset error:', error);
-      this.resetConfirmError = 'Failed to reset password. Please try again.';
-      this.resetConfirmMessage = '';
+      this.resetConfirmError =
+        'An unexpected error occurred. Please try again.';
     }
   }
 
   // Handle Email Verification
   async handleEmailVerification(token: string): Promise<void> {
     try {
-      const errorMessage = await this.authService.verifyEmail(token);
-      if (errorMessage) {
-        this.verificationError = errorMessage;
-        this.verificationMessage = '';
-      } else {
+      const result = await this.authService.verifyEmail(token);
+      console.log('Verification result:', result); // Log the response for debugging
+
+      if (result?.message === 'Email verified successfully') {
         this.verificationError = '';
-        this.verificationMessage = 'Your email has been verified successfully.';
+        this.verificationMessage = result.message;
+        this.verificationComplete = true; // Show the registration complete screen
+      } else {
+        this.verificationError = result.message || 'Verification failed.';
+        this.verificationMessage = '';
       }
     } catch (error) {
       console.error('Email verification error:', error);
       this.verificationError = 'Failed to verify email. Please try again.';
       this.verificationMessage = '';
     }
+  }
+
+  // Navigate back to the login page
+  navigateToLogin(): void {
+    this.verificationComplete = false; // Reset the state
+    this.router.navigate(['/login']); // Navigate to login route
   }
 
   // Clear all messages
@@ -254,26 +269,42 @@ export class LoginComponent implements OnInit {
   }
 
   loginWithGoogle(): void {
-    this.auth0Service.loginWithRedirect({
-      authorizationParams: { connection: 'google-oauth2' },
-    });
+    if (!this.auth0Service) {
+      console.error('Auth0Service is not initialized');
+    } else {
+      this.auth0Service.loginWithRedirect({
+        authorizationParams: { connection: 'google-oauth2' },
+      });
+    }
   }
 
   loginWithGitHub(): void {
-    this.auth0Service.loginWithRedirect({
-      authorizationParams: { connection: 'github' },
-    });
+    if (!this.auth0Service) {
+      console.error('Auth0Service is not initialized');
+    } else {
+      this.auth0Service.loginWithRedirect({
+        authorizationParams: { connection: 'github' },
+      });
+    }
   }
 
   loginWithLinkedIn(): void {
-    this.auth0Service.loginWithRedirect({
-      authorizationParams: { connection: 'linkedin' },
-    });
+    if (!this.auth0Service) {
+      console.error('Auth0Service is not initialized');
+    } else {
+      this.auth0Service.loginWithRedirect({
+        authorizationParams: { connection: 'linkedin' },
+      });
+    }
   }
 
   loginWithFacebook(): void {
-    this.auth0Service.loginWithRedirect({
-      authorizationParams: { connection: 'facebook' },
-    });
+    if (!this.auth0Service) {
+      console.error('Auth0Service is not initialized');
+    } else {
+      this.auth0Service.loginWithRedirect({
+        authorizationParams: { connection: 'facebook' },
+      });
+    }
   }
 }

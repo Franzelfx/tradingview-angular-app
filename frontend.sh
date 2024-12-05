@@ -1,1 +1,2 @@
-ng serve --host 0.0.0.0 --port 4200 --disable-host-check --configuration development --ssl --ssl-key /etc/letsencrypt/live/ffe-ai.com/privkey.pem --ssl-cert /etc/letsencrypt/live/ffe-ai.com/fullchain.pem
+#ng serve --host 0.0.0.0 --port 4200 --disable-host-check --configuration development --ssl --ssl-key /etc/letsencrypt/live/ffe-ai.com/privkey.pem --ssl-cert /etc/letsencrypt/live/ffe-ai.com/fullchain.pem
+ng serve --host 0.0.0.0 --port 4200 --disable-host-check --configuration development
