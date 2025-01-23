@@ -35,6 +35,9 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
   private resizeObserver: ResizeObserver | undefined;
   private isInferenceRunning: boolean = false;
 
+  // Zeitoffset in Sekunden (1 Stunde)
+  private readonly TIME_OFFSET_SECONDS: number = 3600;
+
   constructor(
     private chartDataService: ChartDataService,
     private renderer: Renderer2,
@@ -293,10 +296,16 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
    * @returns The converted UTCTimestamp.
    */
   convertTimestamp = (ts: number): UTCTimestamp => {
-    // Check if the timestamp is in milliseconds (e.g., length > 10)
+    let adjustedTs = ts;
+
+    // Check if the timestamp is in milliseconds (e.g., greater than 10^10)
     if (ts > 1e10) {
-      return Math.floor(ts / 1000) as UTCTimestamp;
+      adjustedTs = Math.floor(ts / 1000);
     }
-    return ts as UTCTimestamp;
+
+    // Add the time offset to adjust the confidence score display
+    adjustedTs += this.TIME_OFFSET_SECONDS;
+
+    return adjustedTs as UTCTimestamp;
   };
 }
