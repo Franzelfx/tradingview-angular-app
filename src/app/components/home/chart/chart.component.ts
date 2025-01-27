@@ -36,7 +36,7 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
   private isInferenceRunning: boolean = false;
 
   // Zeitoffset in Sekunden (1 Stunde)
-  private readonly TIME_OFFSET_SECONDS: number = 3600;
+  private readonly TIME_OFFSET_SECONDS: number = 0;
 
   constructor(
     private chartDataService: ChartDataService,
