@@ -5,31 +5,36 @@
 @import '~@angular/material/prebuilt-themes/indigo-pink.css';
 
 /* Define CSS Variables for Dark Theme as Default */
-:root {
-    /* Dark Theme Colors */
-    --color-background: #121212;
-    --color-text: #e0e0e0;
-    --color-header-bg: #2c2c2c;
-    --color-header-text: #ffffff;
-    /* Sidebar Colors */
-    --color-sidebar-bg: #3c3c3c;
-    --color-sidebar-text: #e0e0e0;
-    --color-sidebar-hover: #555;
-    --color-main-bg: #1e1e1e;
-    --color-main-text: #e0e0e0;
-    --color-chart-bg: #2c2c2c;
-    --color-chart-border: #555;
-    --color-button-hover: #4caf50;
-    /* Sidebar Width Variables */
-    --sidebar-width: 150px;
-    --sidebar-width-medium: 130px;
-    --sidebar-width-small: 100px;
+/* Global Styles and CSS Variables */
 
-    /* Gradient Variables for Dark Theme */
-    --login-bg-gradient: linear-gradient(90deg,
-            #1e1e1e 0%,
-            #555555 37%,
-            rgba(0, 212, 255, 1) 94%);
+:root {
+    /* Palette */
+    --purple: #690690;
+    --green: #069069;
+    --yellow: #999900;
+    --red: #960420;
+    --blue: #420ffe;
+    --dark-red: #420420;
+    --white: #ffeffe;
+    --grey: #666666;
+    --black : #000000;
+
+    /* Global colors */
+    --background: var(--black);
+    --text-color: var(--white);
+    --color-header-bg: var(--black);
+    --color-header-text: var(--white);
+
+    /* Gradient for the overlay background */
+    --login-bg-gradient: linear-gradient(90deg, var(--purple) 0%, var(--blue) 100%);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--background);
+    color: var(--text-color);
 }
 
 /* Define CSS Variables for Light Theme under a class */
