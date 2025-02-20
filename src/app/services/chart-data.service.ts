@@ -3,7 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { environment as env } from '../../environments/environment';
-import { HttpParams } from '@angular/common/http';
 
 @Injectable({
   providedIn: 'root',
@@ -13,33 +12,15 @@ export class ChartDataService {
 
   constructor(private http: HttpClient) {}
 
-  getChartDumps(): Observable<any> {
-    return this.http
-      .get(`${this.apiUrl}/dumps`)
-      .pipe(tap((data) => console.log('getChartDumps response:', data)));
-  }
-
-  getConfidence(pair: string): Observable<any> {
-    return this.http
-      .get(`${this.apiUrl}/confidence/${pair}`)
-      .pipe(
-        tap((data) => console.log(`getConfidence response for ${pair}:`, data))
-      );
-  }
-
-  getConfidences(pair: string): Observable<any> {
-    return this.http
-      .get(`${this.apiUrl}/confidences/${pair}`)
-      .pipe(
-        tap((data) => console.log(`getConfidences response for ${pair}:`, data))
-      );
-  }
-
-  getModelBars(pair: string, limit: number): Observable<any> {
-    return this.http.get(`${this.apiUrl}/bars/${pair}/${limit}`).pipe(
+  /**
+   * Retrieves the last N bars of Forex data for the given pair.
+   * Corresponds to the API endpoint: GET /bars/{pair}/{bars}
+   */
+  getModelBars(pair: string, bars: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/bars/${pair}/${bars}`).pipe(
       tap((data) =>
         console.log(
-          `getModelBars response for ${pair} (limit: ${limit}):`,
+          `getModelBars response for ${pair} (bars: ${bars}):`,
           data
         )
       ),
@@ -47,29 +28,29 @@ export class ChartDataService {
     );
   }
 
+  /**
+   * Retrieves prediction data for the given pair.
+   * Corresponds to the API endpoint: GET /prediction/{pair}
+   */
   getPrediction(pair: string): Observable<any> {
     return this.http.get(`${this.apiUrl}/prediction/${pair}`).pipe(
-      tap((data) => console.log(`getPrediction response for ${pair}:`, data)),
+      tap((data) =>
+        console.log(`getPrediction response for ${pair}:`, data)
+      ),
       map((data) => this.adjustTimestamps(data))
     );
   }
 
-  triggerInference(pair: string): Observable<any> {
-    const params = new HttpParams().set('pair', pair);
-    return this.http.post(`${this.apiUrl}/inference`, null, { params });
-  }
-
   private adjustTimestamps(data: any): any {
     const currentUtcOffset = this.getCurrentUtcOffsetInSeconds();
+    // Check if data is nested under a 'data' key or is an array
     if (data.data) {
-      // If the data is nested under 'data' key
       console.log('Adjusting timestamps for nested data:', data.data);
       data.data = data.data.map((d: any) => ({
         ...d,
         time: d.time + currentUtcOffset,
       }));
-    } else {
-      // If the data is an array
+    } else if (Array.isArray(data)) {
       console.log('Adjusting timestamps for array data:', data);
       data = data.map((d: any) => ({
         ...d,

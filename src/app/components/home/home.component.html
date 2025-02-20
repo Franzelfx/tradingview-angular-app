@@ -1,35 +1,13 @@
-<!-- src/app.component.html -->
+<!-- src/app/components/home/home.component.html -->
 
-<!-- Header Component -->
-<header>
-  <app-header 
-    [isDarkMode]="isDarkMode" 
-    [isSidebarVisible]="isSidebarVisible"
-    (toggleDarkModeEvent)="toggleDarkMode($event)"
-    (toggleSidebarEvent)="toggleSidebar()">
-  </app-header>
-</header>
+<!-- Header Component (assume header now just displays static dark mode UI) -->
+<app-header [isDarkMode]="isDarkMode"></app-header>
 
 <!-- Main Container -->
 <main class="container">
-  <!-- Sidebar Component -->
-  <app-sidebar 
-    [pairs]="pairs" 
-    [selectedPairs]="selectedPairs"
-    (togglePairSelection)="togglePairSelection($event)"
-    [isSidebarVisible]="isSidebarVisible"
-    [class.hidden]="!isSidebarVisible">
-  </app-sidebar>
-
   <!-- Main Content Area -->
   <div class="main-content">
-    <!-- Chart Components in the same order as the sidebar -->
-    <ng-container *ngFor="let pair of pairs">
-      <app-chart 
-        *ngIf="selectedPairs.includes(pair)"
-        [pair]="pair" 
-        [isDarkMode]="isDarkMode">
-      </app-chart>
-    </ng-container>
+    <!-- Render a single chart for a default pair -->
+    <app-chart [pair]="'EURUSD'"></app-chart>
   </div>
 </main>

@@ -6,6 +6,21 @@ app-root {
     margin: 0;
     display: flex;
     flex-direction: column;
+    background-color: var(--background);
+        /* Set overall background to black */
+}
+
+/* Ensure the main container and content area are black */
+.container {
+    background-color: var(--background);
+}
+
+.main-content {
+    background-color: var(--background);
+    padding-left: 5px;
+    padding-right: 25px;
+    padding-top: 20px;
+    overflow-y: auto;
 }
 
 /* Header Styles */
@@ -20,7 +35,7 @@ header {
 app-header {
     height: 100%;
     width: 100%;
-    background-color: #fff;
+    background-color: var(--background);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
@@ -57,7 +72,6 @@ app-sidebar.hidden {
 /* Main Content Styles */
 .main-content {
     flex-grow: 1;
-    padding: 20px;
     overflow-y: auto;
     transition: all 0.3s ease;
 }
@@ -65,5 +79,5 @@ app-sidebar.hidden {
 /* Optional: Styling adjustments for body and content responsiveness */
 body {
     font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
+    background-color: var(--background);
 }
