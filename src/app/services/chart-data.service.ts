@@ -9,7 +9,7 @@ import { environment as env } from '../../environments/environment';
 })
 export class ChartDataService {
   private apiUrl = env.apiUrl;
-  private readonly POLLING_INTERVAL = 60000; // 60 seconds
+  private readonly POLLING_INTERVAL = 10000; // 10 seconds
 
   constructor(private http: HttpClient) { }
 
