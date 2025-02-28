@@ -1,84 +1,133 @@
-/* Ensure the html, body, and app-root take full height */
+/* Global Layout: Ensure the entire page uses a column flex layout */
 html,
 body,
 app-root {
-    height: 100%;
+    height: 100vh;
     margin: 0;
     display: flex;
     flex-direction: column;
-    background-color: var(--background);
-        /* Set overall background to black */
 }
 
-/* Ensure the main container and content area are black */
-.container {
-    background-color: var(--background);
-}
-
-.main-content {
-    background-color: var(--background);
-    padding-left: 5px;
-    padding-right: 25px;
-    padding-top: 20px;
-    overflow-y: auto;
-}
-
-/* Header Styles */
-header {
+/* Header: Always occupies 10% of the viewport height */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 10vh;
+    /* Fixed header height */
+    padding: 0 20px;
+    /* Only horizontal padding */
+    background-color: var(--color-header-bg);
+    color: var(--color-header-text);
     position: fixed;
     top: 0;
-    width: 100%;
-    height: 60px;
-    z-index: 10;
+    left: 0;
+    right: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease, color 0.3s ease;
+    z-index: 100;
 }
 
-app-header {
-    height: 100%;
-    width: 100%;
-    background-color: var(--background);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-/* Main container holding sidebar and main content */
-.container {
+/* Other header elements remain unchanged */
+.icon-button {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: inherit;
+    cursor: pointer;
     display: flex;
-    flex-direction: row;
-    height: calc(100vh - 60px);
-    /* Adjusts for header height */
-    margin-top: 60px;
-    /* Pushes down to avoid header overlap */
-    width: 100%;
-    transition: all 0.3s ease;
+    align-items: center;
+    transition: transform 0.3s ease;
 }
 
-/* Sidebar Styles */
-app-sidebar {
-    width: 150px;
-    /* Default sidebar width */
-    flex-shrink: 0;
-    /* Prevents the sidebar from shrinking */
-    transition: width 0.3s ease;
-    overflow: hidden;
+.icon-button i {
+    transition: transform 0.3s ease;
 }
 
-app-sidebar.hidden {
-    width: 0;
-    padding: 0;
-    /* Remove padding when hidden */
-    box-shadow: none;
-    /* Remove shadow when hidden */
+.icon-button:hover i {
+    transform: scale(1.2);
 }
 
-/* Main Content Styles */
+.logo-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.ascii-art {
+    font-family: monospace;
+    font-size: 8px;
+    color: var(--color-header-text);
+    padding-top: 10px;
+    line-height: 1;
+}
+
+.logout-button {
+    background: none;
+    border: 2px solid var(--color-header-text);
+    font-size: 16px;
+    color: var(--color-header-text);
+    cursor: pointer;
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.logout-button i {
+    margin-right: 5px;
+}
+
+.logout-button:hover {
+    background-color: var(--green);
+    border-color: var(--green);
+    color: var(--color-header-text);
+}
+
+/* Main container: Adds top padding to ensure content isn’t covered by the header */
 .main-content {
-    flex-grow: 1;
+    flex: 1;
+    padding-top: 10vh;
+    /* Matches the header height */
     overflow-y: auto;
-    padding: 20px;
-    transition: all 0.3s ease;
+    background-color: var(--background);
 }
 
-/* Optional: Styling adjustments for body and content responsiveness */
-body {
-    font-family: Arial, sans-serif;
+/* Chart Component Styles */
+
+/* Adjust the chart wrapper so that it is positioned within .main-content */
+.chart-wrapper {
+    position: relative;
+    width: 100%;
+    /* Option 1: Fixed height that always takes 80vh */
+    height: 80vh;
+    /* Option 2: Fill remaining space:
+       height: calc(100vh - 10vh - [any additional margins]);
+       For example, if you want to subtract a 20px margin:
+       height: calc(100vh - 10vh - 20px);
+    */
+    margin: 20px 0;
     background-color: var(--background);
+    border: 5px solid var(--color-chart-frame);
+    padding: 5px;
+    box-shadow: 0 2px 5px var(--color-chart-frame);
+}
+
+.individual-chart {
+    width: 100%;
+    height: 100%;
+    background-color: var(--background);
+    border-radius: 4px;
+    position: relative;
+}
+
+.chart-pair-name {
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 5px;
 }

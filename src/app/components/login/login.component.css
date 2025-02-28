@@ -1,6 +1,9 @@
 /* Local Styles for the Login Component */
 
 /* Container & Page Layout */
+* {
+    box-sizing: border-box;
+}
 .page {
     display: flex;
     justify-content: center;

@@ -1,24 +1,20 @@
 /* Header Component Styles */
-
-/* Ensure the following CSS variables are defined globally:
-   --color-header-bg, --color-header-text, --green, etc.
-*/
-
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 20px;
+    height: 10vh;
+    /* Header occupies 10% of the viewport height */
+    padding: 0 20px;
     background-color: var(--color-header-bg);
     color: var(--color-header-text);
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: 70px;
-    z-index: 1000;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: background-color 0.3s ease, color 0.3s ease;
+    z-index: 100;
 }
 
 .icon-button {
@@ -40,15 +36,12 @@
     transform: scale(1.2);
 }
 
-/* Logo Container (holds ASCII art) */
 .logo-container {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
-/* ASCII Art Styling */
 .ascii-art {
     font-family: monospace;
     font-size: 8px;
@@ -57,7 +50,6 @@
     line-height: 1;
 }
 
-/* Logout Button Styling */
 .logout-button {
     background: none;
     border: 2px solid var(--color-header-text);
