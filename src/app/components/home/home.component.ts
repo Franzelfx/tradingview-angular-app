@@ -37,9 +37,14 @@ export class HomeComponent implements OnInit {
   }
 
   onToggleSidebar(): void {
-    // Toggle the sidebar class
     this.isSidebarVisible = !this.isSidebarVisible;
+    // Listen for 'transitionend' on the sidebar
+    // or just do a setTimeout if you prefer
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+    }, 350);
   }
+
 
   /**
    * Called once the sidebar transition has ended 

@@ -1,14 +1,15 @@
 .chart-container {
     position: relative;
     width: 100%;
-    height: 100%;
-    /* Fills the grid row assigned to it */
+    height: 97%;
+    /* Fills the flex parent */
     box-sizing: border-box;
     background-color: #1e1e1e;
     border: 3px solid #888;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
+/* Overlay label inside the chart container */
 .chart-label-overlay {
     position: absolute;
     top: 10px;
@@ -17,6 +18,6 @@
     color: #fff;
     padding: 5px 10px;
     border-radius: 4px;
-    font-size: 1rem;
+    font-size: 1.2rem;
     z-index: 10;
 }

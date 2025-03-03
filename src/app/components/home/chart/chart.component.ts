@@ -7,7 +7,8 @@ import {
   OnDestroy,
   AfterViewInit,
   ViewChild,
-  ElementRef
+  ElementRef,
+  HostListener
 } from '@angular/core';
 import { ChartDataService } from '../../../services/chart-data.service';
 import * as LightweightCharts from 'lightweight-charts';
@@ -24,11 +25,18 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('chart', { static: false }) chartElement!: ElementRef;
 
+  @HostListener('window:resize')
+  onWindowResize() {
+    if (this.chart) {
+      const chartContainer = this.chartElement.nativeElement as HTMLElement;
+      this.chart.resize(chartContainer.clientWidth, chartContainer.clientHeight);
+    }
+  }
+
   private chart: LightweightCharts.IChartApi | undefined;
   private candleSeries: LightweightCharts.ISeriesApi<'Candlestick'> | undefined;
   private lineSeries: LightweightCharts.ISeriesApi<'Line'> | undefined;
   private subscriptions: Subscription = new Subscription();
-  private resizeObserver: ResizeObserver | undefined;
 
   // If you need a global time offset for your chart data, set this in seconds.
   private readonly TIME_OFFSET_SECONDS: number = 0;
@@ -44,10 +52,13 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit(): void {
     console.log(`ChartComponent (pair=${this.pair}) => ngAfterViewInit`);
     this.initializeChart();
-
-    // Option A: Listen for the global "resize" event,
-    // which HomeComponent triggers after sidebar transition.
-    window.addEventListener('resize', this.handleWindowResize);
+    const chartContainer = this.chartElement.nativeElement as HTMLElement;
+    const ro = new ResizeObserver(() => {
+      if (this.chart) {
+        this.chart.resize(chartContainer.clientWidth, chartContainer.clientHeight);
+      }
+    });
+    ro.observe(chartContainer);
   }
 
   ngOnDestroy(): void {
@@ -57,14 +68,6 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.chart) {
       this.chart.remove();
     }
-
-    // Disconnect the ResizeObserver
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-    }
-
-    // Stop listening for the global "resize" event
-    window.removeEventListener('resize', this.handleWindowResize);
   }
 
   /**
@@ -176,24 +179,6 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
       }
     );
     this.subscriptions.add(predictionSub);
-
-    // Initialize a ResizeObserver for normal container resizing
-    this.resizeObserver = new ResizeObserver(() => {
-      this.updateChartSize();
-    });
-    this.resizeObserver.observe(chartContainer);
-  }
-
-  /**
-   * Recalculate the chart's width & height from the container's clientWidth/clientHeight.
-   */
-  private updateChartSize(): void {
-    if (!this.chart || !this.chartElement) return;
-    const container = this.chartElement.nativeElement as HTMLElement;
-    this.chart.applyOptions({
-      width: container.clientWidth,
-      height: container.clientHeight,
-    });
   }
 
   /**
@@ -209,12 +194,4 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
     adjustedTs += this.TIME_OFFSET_SECONDS;
     return adjustedTs as UTCTimestamp;
   }
-
-  /**
-   * Handles global window 'resize' events,
-   * triggered by setTimeout(...) in the HomeComponent after toggling sidebar.
-   */
-  private handleWindowResize = (): void => {
-    this.updateChartSize();
-  };
 }
