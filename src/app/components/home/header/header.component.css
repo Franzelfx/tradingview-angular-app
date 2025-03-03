@@ -1,26 +1,25 @@
 /* Header Component Styles */
 .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 10vh;
-    /* Header occupies 10% of the viewport height */
-    padding: 0 20px;
-    background-color: var(--color-header-bg);
-    color: var(--color-header-text);
+    height: 7vh;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    background-color: var(--color-header-bg);
+    color: var(--color-header-text);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: background-color 0.3s ease, color 0.3s ease;
-    z-index: 100;
 }
 
 .icon-button {
     background: none;
     border: none;
-    font-size: 20px;
+    font-size: 25px;
     color: inherit;
     cursor: pointer;
     display: flex;

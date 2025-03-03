@@ -15,15 +15,12 @@ export class ChartDataService {
 
   /**
    * Retrieves the last N bars of Forex data for the given pair.
-   * This method polls the API every 60 seconds and triggers an update when the tab becomes visible.
    */
   getModelBars(pair: string, bars: number): Observable<any> {
-    // Observable that emits when the document becomes visible
     const visibilityChange$ = fromEvent(document, 'visibilitychange').pipe(
       filter(() => document.visibilityState === 'visible')
     );
 
-    // Merge the polling interval and the visibility change observables
     return merge(
       interval(this.POLLING_INTERVAL).pipe(startWith(0)),
       visibilityChange$
@@ -31,10 +28,7 @@ export class ChartDataService {
       switchMap(() =>
         this.http.get(`${this.apiUrl}/bars/${pair}/${bars}`).pipe(
           tap((data) =>
-            console.log(
-              `getModelBars response for ${pair} (bars: ${bars}):`,
-              data
-            )
+            console.log(`getModelBars response for ${pair} (bars: ${bars}):`, data)
           ),
           map((data) => this.adjustTimestamps(data))
         )
@@ -43,10 +37,11 @@ export class ChartDataService {
   }
 
   /**
-   * Retrieves prediction data for the given pair.
-   * This method polls the API every 60 seconds and triggers an update when the tab becomes visible.
+   * Retrieves prediction data for the given pair and field.
+   * The "field" parameter specifies which column value to return (e.g., open, high, low, or close).
+   * Defaults to 'close' if not provided.
    */
-  getPrediction(pair: string): Observable<any> {
+  getPrediction(pair: string, field: string = 'close'): Observable<any> {
     const visibilityChange$ = fromEvent(document, 'visibilitychange').pipe(
       filter(() => document.visibilityState === 'visible')
     );
@@ -56,14 +51,26 @@ export class ChartDataService {
       visibilityChange$
     ).pipe(
       switchMap(() =>
-        this.http.get(`${this.apiUrl}/prediction/${pair}`).pipe(
+        this.http.get(`${this.apiUrl}/prediction/${pair}?field=${field}`).pipe(
           tap((data) =>
-            console.log(`getPrediction response for ${pair}:`, data)
+            console.log(`getPrediction response for ${pair} (field: ${field}):`, data)
           ),
           map((data) => this.adjustTimestamps(data))
         )
       )
     );
+  }
+
+  /**
+   * Retrieves available pairs from the backend.
+   */
+  getAvailablePairs(): Observable<string[]> {
+    return this.http
+      .get<{ available_pairs: string[] }>(`${this.apiUrl}/available_pairs`)
+      .pipe(
+        map(response => response.available_pairs),
+        tap(pairs => console.log('Available pairs:', pairs))
+      );
   }
 
   private adjustTimestamps(data: any): any {

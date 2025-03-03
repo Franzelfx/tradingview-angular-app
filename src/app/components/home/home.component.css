@@ -1,133 +1,86 @@
-/* Global Layout: Ensure the entire page uses a column flex layout */
+/* Lock outer scrolling */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
 html,
 body,
 app-root {
     height: 100vh;
     margin: 0;
+    padding: 0;
+    overflow: hidden;
+    /* no page scrollbar */
     display: flex;
     flex-direction: column;
 }
 
-/* Header: Always occupies 10% of the viewport height */
+/* Fixed header at top (6vh) */
 .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 10vh;
-    /* Fixed header height */
-    padding: 0 20px;
-    /* Only horizontal padding */
-    background-color: var(--color-header-bg);
-    color: var(--color-header-text);
+    height: 6vh;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    transition: background-color 0.3s ease, color 0.3s ease;
     z-index: 100;
-}
-
-/* Other header elements remain unchanged */
-.icon-button {
-    background: none;
-    border: none;
-    font-size: 20px;
-    color: inherit;
-    cursor: pointer;
     display: flex;
     align-items: center;
-    transition: transform 0.3s ease;
+    justify-content: space-between;
+    padding: 0 20px;
+    background-color: var(--color-header-bg);
+    color: var(--color-header-text);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.icon-button i {
-    transition: transform 0.3s ease;
-}
-
-.icon-button:hover i {
-    transform: scale(1.2);
-}
-
-.logo-container {
-    flex: 1;
+/* Container below header */
+.container {
+    margin-top: 6vh;
+    height: calc(100vh - 6vh);
     display: flex;
-    justify-content: center;
-    align-items: center;
+    flex-direction: row;
+    overflow: hidden;
+    /* no container-level scroll */
 }
 
-.ascii-art {
-    font-family: monospace;
-    font-size: 8px;
-    color: var(--color-header-text);
-    padding-top: 10px;
-    line-height: 1;
+/* Sidebar: 
+   - flex-shrink: 0 => won't shrink
+   - transition: width => triggers transitionend event
+*/
+app-sidebar {
+    width: 12em;
+    flex-shrink: 0;
+    transition: width 0.3s ease, padding 0.3s ease;
+    overflow: hidden;
 }
 
-.logout-button {
-    background: none;
-    border: 2px solid var(--color-header-text);
-    font-size: 16px;
-    color: var(--color-header-text);
-    cursor: pointer;
-    padding: 5px 10px;
-    display: flex;
-    align-items: center;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
+app-sidebar.hidden {
+    width: 0;
+    padding: 0;
 }
 
-.logout-button i {
-    margin-right: 5px;
-}
-
-.logout-button:hover {
-    background-color: var(--green);
-    border-color: var(--green);
-    color: var(--color-header-text);
-}
-
-/* Main container: Adds top padding to ensure content isn’t covered by the header */
+/* Main content: 
+   - flex:1 => fill leftover horizontal space
+   - min-width:0 => allow shrinking
+   - display:grid => for chart layout
+   - overflow-y:auto => single vertical scrollbar
+*/
 .main-content {
     flex: 1;
-    padding-top: 10vh;
-    /* Matches the header height */
-    overflow-y: auto;
-    background-color: var(--background);
-}
-
-/* Chart Component Styles */
-
-/* Adjust the chart wrapper so that it is positioned within .main-content */
-.chart-wrapper {
-    position: relative;
-    width: 100%;
-    /* Option 1: Fixed height that always takes 80vh */
-    height: 80vh;
-    /* Option 2: Fill remaining space:
-       height: calc(100vh - 10vh - [any additional margins]);
-       For example, if you want to subtract a 20px margin:
-       height: calc(100vh - 10vh - 20px);
-    */
-    margin: 20px 0;
-    background-color: var(--background);
-    border: 5px solid var(--color-chart-frame);
-    padding: 5px;
-    box-shadow: 0 2px 5px var(--color-chart-frame);
-}
-
-.individual-chart {
-    width: 100%;
+    min-width: 0;
+    display: grid;
+    gap: 16px;
+    padding: 1rem;
     height: 100%;
-    background-color: var(--background);
-    border-radius: 4px;
-    position: relative;
+    overflow-y: auto;
 }
 
-.chart-pair-name {
-    background-color: rgba(0, 0, 0, 0.5);
-    color: #fff;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-weight: 500;
-    font-size: 14px;
-    margin-bottom: 5px;
+/* 
+   Direct children => each row
+   We'll define 'grid-template-rows' in the template with repeat(N,1fr).
+*/
+.main-content>div {
+    transition: all 0.5s ease;
+    /* optional smooth changes if row count changes */
 }
