@@ -34,6 +34,8 @@ export class HomeComponent implements OnInit {
     } else {
       this.selectedPairs.push(pair);
     }
+    // Re-sort selectedPairs so that they follow the order defined in availablePairs
+    this.selectedPairs.sort((a, b) => this.availablePairs.indexOf(a) - this.availablePairs.indexOf(b));
   }
 
   onToggleSidebar(): void {
@@ -51,10 +53,8 @@ export class HomeComponent implements OnInit {
    * (only if the propertyName is 'width').
    */
   onSidebarTransitionEnd(event: TransitionEvent): void {
-    // Check if the transition that ended was the width transition
     if (event.propertyName === 'width') {
-      // Dispatch a global resize event so the chart can update
-      window.dispatchEvent(new Event('resize'));
+      setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
     }
   }
 

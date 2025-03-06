@@ -38,7 +38,7 @@ app-root {
    - transition: width => triggers transitionend event
 */
 app-sidebar {
-    width: 12em;
+    width: 7em;
     flex-shrink: 0;
     transition: width 0.3s ease, padding 0.3s ease;
     overflow: hidden;
@@ -62,7 +62,7 @@ app-sidebar.hidden {
     height: 100%;
     overflow-y: auto;
     min-width: 0;
-    flex: 1;
+    flex: 1 1 auto;
     transition: padding 0.3s ease;
 }
 
