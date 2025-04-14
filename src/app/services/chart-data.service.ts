@@ -37,9 +37,21 @@ export class ChartDataService {
   }
 
   /**
-   * Retrieves prediction data for the given pair and field.
-   * The "field" parameter specifies which column value to return (e.g., open, high, low, or close).
-   * Defaults to 'close' if not provided.
+   * Retrieves prediction data for the given pair and transforms it into multiple prediction series.
+   * 
+   * The backend response is expected to be an array of objects where each object looks like:
+   * {
+   *   "timestamp": 1744664700,
+   *   "close_sma_10_SOLUSD": 391.2088623047,
+   *   "close_moving_grid_min_288_5_SOLUSD": 385.0978088379,
+   *   "close_moving_grid_max_288_95_SOLUSD": 396.9638977051
+   * }
+   * 
+   * This function extracts all keys (other than "timestamp") and returns an array where each element 
+   * corresponds to one prediction series (an array of points). Each point is in the form:
+   * { time: number, y_hat: number }
+   * 
+   * The current UTC offset (in seconds) is added to each timestamp.
    */
   getPrediction(pair: string, field: string = 'close'): Observable<any> {
     const visibilityChange$ = fromEvent(document, 'visibilitychange').pipe(
@@ -51,15 +63,49 @@ export class ChartDataService {
       visibilityChange$
     ).pipe(
       switchMap(() =>
-        this.http.get(`${this.apiUrl}/prediction/${pair}?field=${field}`).pipe(
-          tap((data) =>
-            console.log(`getPrediction response for ${pair} (field: ${field}):`, data)
-          ),
-          map((data) => this.adjustTimestamps(data))
-        )
-      )
+        this.http.get(`${this.apiUrl}/predictions/${pair}?field=${field}`)
+      ),
+      tap((data) =>
+        console.log(`getPrediction response for ${pair} (field: ${field}):`, data)
+      ),
+      map((data: any) => {
+        // Support responses that are either an array or an object with a 'data' property.
+        let rows: any[] = [];
+        if (Array.isArray(data)) {
+          rows = data;
+        } else if (data && Array.isArray(data.data)) {
+          rows = data.data;
+        }
+        if (!rows || rows.length === 0) {
+          return []; // return empty array if no data
+        }
+
+        // Extract all prediction column names (all keys except "timestamp").
+        const seriesNames = Object.keys(rows[0]).filter(key => key !== 'timestamp');
+        // Build one prediction series per key.
+        const seriesArray = seriesNames.map(name => {
+          return rows.map(row => {
+            const timeValue = Number(row.timestamp);
+            return {
+              time: isNaN(timeValue) ? NaN : timeValue,
+              y_hat: row[name]
+            };
+          }).filter(point => !isNaN(point.time));
+        });
+
+        // Adjust each series' timestamps by the current UTC offset and sort by time.
+        const utcOffset = this.getCurrentUtcOffsetInSeconds();
+        seriesArray.forEach(series => {
+          series.forEach(point => {
+            point.time += utcOffset;
+          });
+          series.sort((a, b) => a.time - b.time);
+        });
+        return seriesArray;
+      })
     );
   }
+
 
   /**
    * Retrieves available pairs from the backend.
@@ -73,6 +119,12 @@ export class ChartDataService {
       );
   }
 
+  /**
+   * Adjusts timestamps in the data.
+   *
+   * If data is an array of objects with a 'time' field, adds the current UTC offset.
+   * If data is nested (e.g., { data: [...] }) then adjusts the inner array.
+   */
   private adjustTimestamps(data: any): any {
     const currentUtcOffset = this.getCurrentUtcOffsetInSeconds();
     if (data.data) {

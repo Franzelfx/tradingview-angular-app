@@ -1,5 +1,3 @@
-// src/app/components/chart/chart.component.ts
-
 import {
   Component,
   Input,
@@ -35,15 +33,16 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private chart: LightweightCharts.IChartApi | undefined;
   private candleSeries: LightweightCharts.ISeriesApi<'Candlestick'> | undefined;
-  private lineSeries: LightweightCharts.ISeriesApi<'Line'> | undefined;
+  // Instead of a single lineSeries, we maintain an array for multiple prediction series.
+  private predictionSeries: LightweightCharts.ISeriesApi<'Line'>[] = [];
   private subscriptions: Subscription = new Subscription();
 
-  // If you need a global time offset for your chart data, set this in seconds.
+  // Define the target interval (5 minutes in seconds)
+  private readonly TARGET_INTERVAL_SECONDS = 300;
+  // Global time offset (if needed).
   private readonly TIME_OFFSET_SECONDS: number = 0;
 
-  constructor(
-    private chartDataService: ChartDataService
-  ) { }
+  constructor(private chartDataService: ChartDataService) { }
 
   ngOnInit(): void {
     console.log(`ChartComponent (pair=${this.pair}) => ngOnInit`);
@@ -63,16 +62,17 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
-
-    // Remove the chart if it exists
+    this.predictionSeries.forEach(series => series.remove());
+    if (this.candleSeries) {
+      this.candleSeries.remove();
+    }
     if (this.chart) {
       this.chart.remove();
     }
   }
 
   /**
-   * Initializes the LightweightCharts chart, sets up watchers for container resizing,
-   * and subscribes to data from ChartDataService.
+   * Initializes the chart, creates the candlestick series, and subscribes to bar and prediction data.
    */
   private initializeChart(): void {
     const chartContainer = this.chartElement.nativeElement as HTMLElement;
@@ -81,13 +81,13 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    // Read global CSS variables for theming
+    // Read global CSS variables for theming.
     const style = getComputedStyle(document.documentElement);
     const chartBgColor = style.getPropertyValue('--color-chart-bg').trim() || '#000000';
     const chartTextColor = style.getPropertyValue('--color-chart-text').trim() || '#ffffff';
     const gridColor = style.getPropertyValue('--color-grid-lines').trim() || '#555';
 
-    // Candlestick colors
+    // Candlestick series colors.
     const upColor = style.getPropertyValue('--chart-candle-up-color').trim() || 'lime';
     const downColor = style.getPropertyValue('--chart-candle-down-color').trim() || 'red';
     const borderUpColor = style.getPropertyValue('--chart-candle-border-up-color').trim() || 'lime';
@@ -95,7 +95,7 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
     const wickUpColor = style.getPropertyValue('--chart-candle-wick-up-color').trim() || 'lime';
     const wickDownColor = style.getPropertyValue('--chart-candle-wick-down-color').trim() || 'red';
 
-    // Create the chart
+    // Create chart.
     this.chart = LightweightCharts.createChart(chartContainer, {
       width: chartContainer.clientWidth,
       height: chartContainer.clientHeight,
@@ -115,7 +115,7 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
       },
     });
 
-    // Candlestick series
+    // Add candlestick series.
     this.candleSeries = this.chart.addCandlestickSeries({
       upColor,
       downColor,
@@ -129,13 +129,7 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
       },
     });
 
-    // Line series for predictions
-    this.lineSeries = this.chart.addLineSeries({
-      color: '#2196f3',
-      lineWidth: 2,
-    });
-
-    // Subscribe to bar (candlestick) data
+    // Subscribe to bar data.
     const barsSub = this.chartDataService.getModelBars(this.pair, 2000).subscribe(
       (data: any) => {
         console.log(`Bars data for pair=${this.pair}:`, data);
@@ -153,41 +147,96 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
           console.warn(`Unexpected bars data format for pair=${this.pair}:`, data);
         }
       },
-      (error) => {
-        console.error(`Error loading bars for pair=${this.pair}:`, error);
-      }
+      error => console.error(`Error loading bars for pair=${this.pair}:`, error)
     );
     this.subscriptions.add(barsSub);
 
-    // Subscribe to prediction data
+    // Subscribe to prediction data.
     const predictionSub = this.chartDataService.getPrediction(this.pair).subscribe(
-      (data: any) => {
-        console.log(`Prediction data for pair=${this.pair}:`, data);
-        if (Array.isArray(data)) {
-          this.lineSeries?.setData(
-            data.map(d => ({
-              time: this.convertTimestamp(d.time),
-              value: d.y_hat,
-            }))
-          );
-        } else {
-          console.warn(`Unexpected prediction data format for pair=${this.pair}:`, data);
-        }
+      (seriesArray: any[]) => {
+        console.log(`Prediction data for pair=${this.pair}:`, seriesArray);
+
+        // Remove any existing prediction series.
+        this.predictionSeries.forEach(series => series.remove());
+        this.predictionSeries = [];
+
+        // Optionally, interpolate each series to fill gaps until the target resolution.
+        const interpolatedSeries = seriesArray.map(series =>
+          this.interpolatePredictionSeries(series, this.TARGET_INTERVAL_SECONDS)
+        );
+
+        // Compute mean prediction of each series.
+        const means = interpolatedSeries.map(series =>
+          series.reduce((sum: number, point: any) => sum + point.y_hat, 0) / series.length
+        );
+        const minMean = Math.min(...means);
+        const maxMean = Math.max(...means);
+
+        // Create a new line series for each prediction series.
+        interpolatedSeries.forEach((series, index) => {
+          let color = '#2196f3'; // default blue
+          if (means[index] === maxMean) {
+            color = 'green';
+          } else if (means[index] === minMean) {
+            color = 'red';
+          }
+          const newSeries = this.chart!.addLineSeries({
+            color: color,
+            lineWidth: 2,
+          });
+          const formattedData = series.map((d: any) => ({
+            time: this.convertTimestamp(d.time),
+            value: d.y_hat,
+          }));
+          newSeries.setData(formattedData);
+          this.predictionSeries.push(newSeries);
+        });
       },
-      (error) => {
-        console.error(`Error loading prediction for pair=${this.pair}:`, error);
-      }
+      error => console.error(`Error loading predictions for pair=${this.pair}:`, error)
     );
     this.subscriptions.add(predictionSub);
   }
 
   /**
-   * Convert a given timestamp (sec or ms) to a UTCTimestamp recognized by LightweightCharts.
+   * Helper: Interpolates a prediction series to the target interval (in seconds).
+   * Uses linear interpolation between consecutive points.
+   */
+  private interpolatePredictionSeries(
+    series: { time: number, y_hat: number }[],
+    targetIntervalSeconds: number
+  ): { time: number, y_hat: number }[] {
+    if (series.length < 2) {
+      return series;
+    }
+    const interpolated: { time: number, y_hat: number }[] = [];
+    for (let i = 0; i < series.length - 1; i++) {
+      const pointA = series[i];
+      const pointB = series[i + 1];
+      interpolated.push(pointA);
+      const gap = pointB.time - pointA.time;
+      // Calculate how many additional points to generate.
+      const numExtra = Math.floor(gap / targetIntervalSeconds) - 1;
+      for (let j = 1; j <= numExtra; j++) {
+        const interpTime = pointA.time + j * targetIntervalSeconds;
+        const fraction = (interpTime - pointA.time) / gap;
+        const interpY = pointA.y_hat + fraction * (pointB.y_hat - pointA.y_hat);
+        interpolated.push({ time: interpTime, y_hat: interpY });
+      }
+    }
+    // Append the last point.
+    interpolated.push(series[series.length - 1]);
+    // Ensure sorted order.
+    interpolated.sort((a, b) => a.time - b.time);
+    return interpolated;
+  }
+
+  /**
+   * Convert a given timestamp (in seconds or ms) to a UTCTimestamp recognized by LightweightCharts.
    * Applies TIME_OFFSET_SECONDS if needed.
    */
   private convertTimestamp(ts: number): UTCTimestamp {
     let adjustedTs = ts;
-    // If timestamp is in milliseconds, convert to seconds
+    // If the timestamp is in milliseconds, convert to seconds.
     if (ts > 1e10) {
       adjustedTs = Math.floor(ts / 1000);
     }
