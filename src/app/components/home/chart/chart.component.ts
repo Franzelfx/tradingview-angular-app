@@ -62,9 +62,9 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
-    this.predictionSeries.forEach(series => series.remove());
+    this.predictionSeries.forEach(series => this.chart?.removeSeries(series));
     if (this.candleSeries) {
-      this.candleSeries.remove();
+      this.chart?.removeSeries(this.candleSeries);
     }
     if (this.chart) {
       this.chart.remove();
@@ -157,7 +157,7 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
         console.log(`Prediction data for pair=${this.pair}:`, seriesArray);
 
         // Remove any existing prediction series.
-        this.predictionSeries.forEach(series => series.remove());
+        this.predictionSeries.forEach(series => this.chart?.removeSeries(series));
         this.predictionSeries = [];
 
         // Optionally, interpolate each series to fill gaps until the target resolution.
