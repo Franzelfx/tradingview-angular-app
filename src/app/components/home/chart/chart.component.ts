@@ -45,11 +45,9 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
   constructor(private chartDataService: ChartDataService) { }
 
   ngOnInit(): void {
-    console.log(`ChartComponent (pair=${this.pair}) => ngOnInit`);
   }
 
   ngAfterViewInit(): void {
-    console.log(`ChartComponent (pair=${this.pair}) => ngAfterViewInit`);
     this.initializeChart();
     const chartContainer = this.chartElement.nativeElement as HTMLElement;
     const ro = new ResizeObserver(() => {
@@ -132,7 +130,6 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
     // Subscribe to bar data.
     const barsSub = this.chartDataService.getModelBars(this.pair, 2000).subscribe(
       (data: any) => {
-        console.log(`Bars data for pair=${this.pair}:`, data);
         if (Array.isArray(data)) {
           this.candleSeries?.setData(
             data.map(d => ({
@@ -154,7 +151,6 @@ export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
     // Subscribe to prediction data.
     const predictionSub = this.chartDataService.getPrediction(this.pair).subscribe(
       (seriesArray: any[]) => {
-        console.log(`Prediction data for pair=${this.pair}:`, seriesArray);
 
         // Remove any existing prediction series.
         this.predictionSeries.forEach(series => this.chart?.removeSeries(series));

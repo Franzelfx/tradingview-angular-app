@@ -1,152 +1,146 @@
-import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, interval, fromEvent, merge } from 'rxjs';
-import { map, tap, startWith, switchMap, filter } from 'rxjs/operators';
-import { environment as env } from '../../environments/environment';
+import { Injectable } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Observable, interval, fromEvent, merge, of } from "rxjs";
+import { map, switchMap, tap, filter, take, startWith } from "rxjs/operators";
+import { environment as env } from "../../environments/environment";
+
+export interface Bar {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+}
+
+export interface PredictionPoint {
+  time: number;
+  y_hat: number;
+}
 
 @Injectable({
-  providedIn: 'root',
+  providedIn: "root",
 })
 export class ChartDataService {
   private apiUrl = env.apiUrl;
-  private readonly POLLING_INTERVAL = 10000; // 10 seconds
+  private readonly POLLING_INTERVAL = 10_000; // 10 seconds
 
   constructor(private http: HttpClient) { }
 
   /**
-   * Retrieves the last N bars of Forex data for the given pair.
+   * ----------  BAR DATA  ---------------------------------------------------
+   * Retrieves the last `bars` OHLC candles for `pair` at the given interval.
+   * If `intervalOverride` is omitted, it derives the coarsest interval it can
+   * observe from the first prediction series (fallback: "1m").
    */
-  getModelBars(pair: string, bars: number): Observable<any> {
-    const visibilityChange$ = fromEvent(document, 'visibilitychange').pipe(
-      filter(() => document.visibilityState === 'visible')
+  getModelBars(
+    pair: string,
+    bars: number,
+    intervalOverride?: string,
+  ): Observable<Bar[]> {
+    const visibility$ = fromEvent(document, "visibilitychange").pipe(
+      filter(() => document.visibilityState === "visible")
     );
 
-    return merge(
-      interval(this.POLLING_INTERVAL).pipe(startWith(0)),
-      visibilityChange$
-    ).pipe(
-      switchMap(() =>
-        this.http.get(`${this.apiUrl}/bars/${pair}/${bars}`).pipe(
-          tap((data) =>
-            console.log(`getModelBars response for ${pair} (bars: ${bars}):`, data)
+    // Derive interval if the caller did not supply one.
+    const maybeInterval$ = intervalOverride
+      ? of(intervalOverride)
+      : this.getPrediction(pair).pipe(
+        take(1),
+        map((seriesArray) => this.computeInterval(seriesArray[0] || [])) // seriesArray always length 1
+      );
+
+    return maybeInterval$.pipe(
+      switchMap((intervalStr) =>
+        merge(interval(this.POLLING_INTERVAL).pipe(startWith(0)), visibility$).pipe(
+          switchMap(() =>
+            this.http.get<Bar[]>(
+              `${this.apiUrl}/bars/${pair}/${bars}?interval=${intervalStr}`
+            )
           ),
-          map((data) => this.adjustTimestamps(data))
+          map((barsData) => this.applyUtcOffset(barsData))
         )
       )
     );
   }
 
   /**
-   * Retrieves prediction data for the given pair and transforms it into multiple prediction series.
-   * 
-   * The backend response is expected to be an array of objects where each object looks like:
-   * {
-   *   "timestamp": 1744664700,
-   *   "close_sma_10_SOLUSD": 391.2088623047,
-   *   "close_moving_grid_min_288_5_SOLUSD": 385.0978088379,
-   *   "close_moving_grid_max_288_95_SOLUSD": 396.9638977051
-   * }
-   * 
-   * This function extracts all keys (other than "timestamp") and returns an array where each element 
-   * corresponds to one prediction series (an array of points). Each point is in the form:
-   * { time: number, y_hat: number }
-   * 
-   * The current UTC offset (in seconds) is added to each timestamp.
+   * ----------  PREDICTIONS  -------------------------------------------------
+   * Returns **one** prediction series (array of PredictionPoint) wrapped in a
+   * single‑element array so that consumers expecting an array of series can
+   * keep working unchanged.
    */
-  getPrediction(pair: string, field: string = 'close'): Observable<any> {
-    const visibilityChange$ = fromEvent(document, 'visibilitychange').pipe(
-      filter(() => document.visibilityState === 'visible')
+  getPrediction(
+    pair: string,
+    field: string | null = null
+  ): Observable<PredictionPoint[][]> {
+    const visibility$ = fromEvent(document, "visibilitychange").pipe(
+      filter(() => document.visibilityState === "visible")
     );
 
-    return merge(
-      interval(this.POLLING_INTERVAL).pipe(startWith(0)),
-      visibilityChange$
-    ).pipe(
+    return merge(interval(this.POLLING_INTERVAL).pipe(startWith(0)), visibility$).pipe(
       switchMap(() =>
-        this.http.get(`${this.apiUrl}/predictions/${pair}?field=${field}`)
+        this.http.get<any>(
+          field
+            ? `${this.apiUrl}/predictions/${pair}?field=${field}`
+            : `${this.apiUrl}/predictions/${pair}`
+        )
       ),
-      tap((data) =>
-        console.log(`getPrediction response for ${pair} (field: ${field}):`, data)
-      ),
-      map((data: any) => {
-        // Support responses that are either an array or an object with a 'data' property.
-        let rows: any[] = [];
-        if (Array.isArray(data)) {
-          rows = data;
-        } else if (data && Array.isArray(data.data)) {
-          rows = data.data;
-        }
-        if (!rows || rows.length === 0) {
-          return []; // return empty array if no data
-        }
-
-        // Extract all prediction column names (all keys except "timestamp").
-        const seriesNames = Object.keys(rows[0]).filter(key => key !== 'timestamp');
-        // Build one prediction series per key.
-        const seriesArray = seriesNames.map(name => {
-          return rows.map(row => {
-            const timeValue = Number(row.timestamp);
-            return {
-              time: isNaN(timeValue) ? NaN : timeValue,
-              y_hat: row[name]
-            };
-          }).filter(point => !isNaN(point.time));
-        });
-
-        // Adjust each series' timestamps by the current UTC offset and sort by time.
-        const utcOffset = this.getCurrentUtcOffsetInSeconds();
-        seriesArray.forEach(series => {
-          series.forEach(point => {
-            point.time += utcOffset;
-          });
-          series.sort((a, b) => a.time - b.time);
-        });
-        return seriesArray;
-      })
+      map((raw) => this.transformPredictionResponse(raw))
     );
   }
 
-
   /**
-   * Retrieves available pairs from the backend.
+   * ----------  AVAILABLE PAIRS  -------------------------------------------
    */
   getAvailablePairs(): Observable<string[]> {
     return this.http
       .get<{ available_pairs: string[] }>(`${this.apiUrl}/available_pairs`)
-      .pipe(
-        map(response => response.available_pairs),
-        tap(pairs => console.log('Available pairs:', pairs))
-      );
+      .pipe(map((resp) => resp.available_pairs));
   }
 
-  /**
-   * Adjusts timestamps in the data.
-   *
-   * If data is an array of objects with a 'time' field, adds the current UTC offset.
-   * If data is nested (e.g., { data: [...] }) then adjusts the inner array.
-   */
-  private adjustTimestamps(data: any): any {
-    const currentUtcOffset = this.getCurrentUtcOffsetInSeconds();
-    if (data.data) {
-      console.log('Adjusting timestamps for nested data:', data.data);
-      data.data = data.data.map((d: any) => ({
-        ...d,
-        time: d.time + currentUtcOffset,
-      }));
-    } else if (Array.isArray(data)) {
-      console.log('Adjusting timestamps for array data:', data);
-      data = data.map((d: any) => ({
-        ...d,
-        time: d.time + currentUtcOffset,
-      }));
-    }
-    console.log('Data after timestamp adjustment:', data);
-    return data;
+  // -------------------------------------------------------------------------
+  // Helpers
+  // -------------------------------------------------------------------------
+
+  /** Convert backend prediction (which may have any single value column) into
+   *  our canonical shape and wrap it in an outer array. */
+  private transformPredictionResponse(raw: any): PredictionPoint[][] {
+    const rows: any[] = Array.isArray(raw) ? raw : raw?.data ?? [];
+    if (!rows.length) return [[]];
+
+    // Find the first key that is not "timestamp".
+    const valueKey = Object.keys(rows[0]).find((k) => k !== "timestamp");
+    if (!valueKey) return [[]];
+
+    const utcOffset = this.getCurrentUtcOffset();
+    const series: PredictionPoint[] = rows
+      .map((r) => ({
+        time: Number(r.timestamp) + utcOffset,
+        y_hat: Number(r[valueKey]),
+      }))
+      .filter((p) => !isNaN(p.time) && !isNaN(p.y_hat))
+      .sort((a, b) => a.time - b.time);
+
+    return [series]; // single‑series wrapped
   }
 
-  private getCurrentUtcOffsetInSeconds(): number {
-    const offsetInSeconds = -new Date().getTimezoneOffset() * 60;
-    console.log('Current UTC offset in seconds:', offsetInSeconds);
-    return offsetInSeconds;
+  /** Compute an interval string such as "5m" from a series. */
+  private computeInterval(series: { time: number }[]): string {
+    if (series.length < 2) return "1m";
+    const deltaSec = series[1].time - series[0].time;
+    if (deltaSec % 86_400 === 0) return `${deltaSec / 86_400}d`;
+    if (deltaSec % 3_600 === 0) return `${deltaSec / 3_600}h`;
+    if (deltaSec % 60 === 0) return `${deltaSec / 60}m`;
+    return `${deltaSec}s`;
+  }
+
+  /** Apply local UTC offset to each bar's time. */
+  private applyUtcOffset<T extends { time: number }>(data: T[]): T[] {
+    const offset = this.getCurrentUtcOffset();
+    return data.map((d) => ({ ...d, time: d.time + offset } as T));
+  }
+
+  private getCurrentUtcOffset(): number {
+    return -new Date().getTimezoneOffset() * 60; // seconds
   }
 }
