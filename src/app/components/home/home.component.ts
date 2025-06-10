@@ -7,51 +7,75 @@ import { ChartDataService } from '../../services/chart-data.service';
   styleUrls: ['./home.component.css'],
 })
 export class HomeComponent implements OnInit {
-  isDarkMode: boolean = true;
+  /**
+   * Key used to persist the currently‑selected pairs in localStorage.
+   */
+  private static readonly LS_KEY = 'selectedPairs';
+
+  // UI state
+  isDarkMode = true;
+  isSidebarVisible = true;
+
+  // Data
   availablePairs: string[] = [];
-  selectedPairs: string[] = [];
-  isSidebarVisible: boolean = true;
+  selectedPairs: string[] = []; // « No pairs selected by default »
 
   constructor(private chartDataService: ChartDataService) { }
 
+  /**
+   * Fetch list of available pairs from the API and restore any persisted
+   * selection from localStorage (if it is still valid).
+   */
   ngOnInit(): void {
     this.chartDataService.getAvailablePairs().subscribe(
       (pairs: string[]) => {
         this.availablePairs = pairs;
-        // Optionally select all pairs by default
-        this.selectedPairs = [...pairs];
+
+        const stored = localStorage.getItem(HomeComponent.LS_KEY);
+        if (stored) {
+          try {
+            const parsed: string[] = JSON.parse(stored);
+            // Keep only the pairs that are still present in the latest list.
+            this.selectedPairs = parsed.filter((p) => pairs.includes(p));
+          } catch {
+            // Malformed JSON – ignore and start fresh.
+            localStorage.removeItem(HomeComponent.LS_KEY);
+            this.selectedPairs = [];
+          }
+        }
       },
-      (error: any) => {
-        console.error('Error fetching available pairs:', error);
-      }
+      (error) => console.error('Error fetching available pairs:', error),
     );
   }
 
+  /**
+   * Toggle a pair in/out of the selection and persist the change.
+   */
   togglePair(pair: string): void {
-    const index = this.selectedPairs.indexOf(pair);
-    if (index > -1) {
-      this.selectedPairs.splice(index, 1);
+    const idx = this.selectedPairs.indexOf(pair);
+    if (idx > -1) {
+      this.selectedPairs.splice(idx, 1);
     } else {
       this.selectedPairs.push(pair);
     }
-    // Re-sort selectedPairs so that they follow the order defined in availablePairs
-    this.selectedPairs.sort((a, b) => this.availablePairs.indexOf(a) - this.availablePairs.indexOf(b));
+
+    // Preserve original ordering as defined by availablePairs.
+    this.selectedPairs.sort(
+      (a, b) => this.availablePairs.indexOf(a) - this.availablePairs.indexOf(b),
+    );
+
+    // Persist the new selection across refreshes.
+    localStorage.setItem(
+      HomeComponent.LS_KEY,
+      JSON.stringify(this.selectedPairs),
+    );
   }
 
   onToggleSidebar(): void {
     this.isSidebarVisible = !this.isSidebarVisible;
-    // Listen for 'transitionend' on the sidebar
-    // or just do a setTimeout if you prefer
-    setTimeout(() => {
-      window.dispatchEvent(new Event('resize'));
-    }, 350);
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 350);
   }
 
-
-  /**
-   * Called once the sidebar transition has ended 
-   * (only if the propertyName is 'width').
-   */
   onSidebarTransitionEnd(event: TransitionEvent): void {
     if (event.propertyName === 'width') {
       setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
@@ -59,7 +83,7 @@ export class HomeComponent implements OnInit {
   }
 
   /**
-   * Build grid-template-rows for each selected chart, e.g. repeat(2, 1fr)
+   * Build the CSS grid rows template string, e.g., "repeat(2, 1fr)".
    */
   getGridTemplateRows(): string {
     const count = this.selectedPairs.length || 1;

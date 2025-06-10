@@ -1,12 +1,11 @@
 import {
   Component,
   Input,
-  OnInit,
-  OnDestroy,
   AfterViewInit,
+  OnDestroy,
   ViewChild,
   ElementRef,
-  HostListener
+  HostListener,
 } from '@angular/core';
 import { ChartDataService } from '../../../services/chart-data.service';
 import * as LightweightCharts from 'lightweight-charts';
@@ -18,225 +17,192 @@ import { UTCTimestamp } from 'lightweight-charts';
   templateUrl: './chart.component.html',
   styleUrls: ['./chart.component.css'],
 })
-export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ChartComponent implements AfterViewInit, OnDestroy {
   @Input() pair: string = 'EURUSD';
 
-  @ViewChild('chart', { static: false }) chartElement!: ElementRef;
+  @ViewChild('chart', { static: false }) private chartElement!: ElementRef;
 
   @HostListener('window:resize')
-  onWindowResize() {
-    if (this.chart) {
-      const chartContainer = this.chartElement.nativeElement as HTMLElement;
-      this.chart.resize(chartContainer.clientWidth, chartContainer.clientHeight);
-    }
+  onWindowResize(): void {
+    const chartContainer = this.chartElement?.nativeElement as HTMLElement;
+    this.chart?.resize(chartContainer.clientWidth, chartContainer.clientHeight);
   }
 
-  private chart: LightweightCharts.IChartApi | undefined;
-  private candleSeries: LightweightCharts.ISeriesApi<'Candlestick'> | undefined;
-  // Instead of a single lineSeries, we maintain an array for multiple prediction series.
+  private chart?: LightweightCharts.IChartApi;
+  private candleSeries?: LightweightCharts.ISeriesApi<'Candlestick'>;
   private predictionSeries: LightweightCharts.ISeriesApi<'Line'>[] = [];
-  private subscriptions: Subscription = new Subscription();
+  private readonly subscriptions = new Subscription();
 
-  // Define the target interval (5 minutes in seconds)
-  private readonly TARGET_INTERVAL_SECONDS = 300;
-  // Global time offset (if needed).
-  private readonly TIME_OFFSET_SECONDS: number = 0;
+  /**
+   * Allows shifting the time axis, e.g., when backend timestamps are not UTC.
+   * Keep at 0 unless you need an offset.
+   */
+  private readonly TIME_OFFSET_SECONDS = 0;
 
-  constructor(private chartDataService: ChartDataService) { }
+  constructor(private readonly chartDataService: ChartDataService) { }
 
-  ngOnInit(): void {
-  }
+  // ---------------------------------------------------------------------------
+  //  LIFECYCLE
+  // ---------------------------------------------------------------------------
 
   ngAfterViewInit(): void {
-    this.initializeChart();
-    const chartContainer = this.chartElement.nativeElement as HTMLElement;
-    const ro = new ResizeObserver(() => {
-      if (this.chart) {
-        this.chart.resize(chartContainer.clientWidth, chartContainer.clientHeight);
-      }
-    });
-    ro.observe(chartContainer);
+    this.initChart();
+    this.observeResize();
   }
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
-    this.predictionSeries.forEach(series => this.chart?.removeSeries(series));
-    if (this.candleSeries) {
-      this.chart?.removeSeries(this.candleSeries);
-    }
-    if (this.chart) {
-      this.chart.remove();
-    }
+    this.predictionSeries.forEach((series) => this.chart?.removeSeries(series));
+    if (this.candleSeries) this.chart?.removeSeries(this.candleSeries);
+    this.chart?.remove();
   }
 
+  // ---------------------------------------------------------------------------
+  //  INITIALISATION
+  // ---------------------------------------------------------------------------
+
   /**
-   * Initializes the chart, creates the candlestick series, and subscribes to bar and prediction data.
+   * Create the Price Chart and add the required series.
    */
-  private initializeChart(): void {
-    const chartContainer = this.chartElement.nativeElement as HTMLElement;
-    if (!chartContainer) {
-      console.warn('Chart container is not available.');
-      return;
-    }
+  private initChart(): void {
+    const container = this.chartElement.nativeElement as HTMLElement;
+    if (!container) return;
 
-    // Read global CSS variables for theming.
-    const style = getComputedStyle(document.documentElement);
-    const chartBgColor = style.getPropertyValue('--color-chart-bg').trim() || '#000000';
-    const chartTextColor = style.getPropertyValue('--color-chart-text').trim() || '#ffffff';
-    const gridColor = style.getPropertyValue('--color-grid-lines').trim() || '#555';
+    const {
+      '--color-chart-bg': chartBg = '#000',
+      '--color-chart-text': chartText = '#fff',
+      '--color-grid-lines': grid = '#555',
+      '--chart-candle-up-color': up = 'lime',
+      '--chart-candle-down-color': down = 'red',
+      '--chart-candle-border-up-color': borderUp = 'lime',
+      '--chart-candle-border-down-color': borderDown = 'red',
+      '--chart-candle-wick-up-color': wickUp = 'lime',
+      '--chart-candle-wick-down-color': wickDown = 'red',
+    } = getComputedStyle(document.documentElement) as unknown as Record<string, string>;
 
-    // Candlestick series colors.
-    const upColor = style.getPropertyValue('--chart-candle-up-color').trim() || 'lime';
-    const downColor = style.getPropertyValue('--chart-candle-down-color').trim() || 'red';
-    const borderUpColor = style.getPropertyValue('--chart-candle-border-up-color').trim() || 'lime';
-    const borderDownColor = style.getPropertyValue('--chart-candle-border-down-color').trim() || 'red';
-    const wickUpColor = style.getPropertyValue('--chart-candle-wick-up-color').trim() || 'lime';
-    const wickDownColor = style.getPropertyValue('--chart-candle-wick-down-color').trim() || 'red';
-
-    // Create chart.
-    this.chart = LightweightCharts.createChart(chartContainer, {
-      width: chartContainer.clientWidth,
-      height: chartContainer.clientHeight,
+    // --- Chart instance ------------------------------------------------------
+    this.chart = LightweightCharts.createChart(container, {
+      width: container.clientWidth,
+      height: container.clientHeight,
       layout: {
-        background: { type: LightweightCharts.ColorType.Solid, color: chartBgColor },
-        textColor: chartTextColor,
+        background: { type: LightweightCharts.ColorType.Solid, color: chartBg.trim() },
+        textColor: chartText.trim(),
       },
       grid: {
-        vertLines: { color: gridColor },
-        horzLines: { color: gridColor },
+        vertLines: { color: grid.trim() },
+        horzLines: { color: grid.trim() },
       },
       crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-      rightPriceScale: { borderColor: gridColor },
-      timeScale: {
-        borderColor: gridColor,
-        timeVisible: true,
-      },
+      rightPriceScale: { borderColor: grid.trim() },
+      timeScale: { borderColor: grid.trim(), timeVisible: true },
     });
 
-    // Add candlestick series.
+    // --- Candlesticks --------------------------------------------------------
     this.candleSeries = this.chart.addCandlestickSeries({
-      upColor,
-      downColor,
-      borderUpColor,
-      borderDownColor,
-      wickUpColor,
-      wickDownColor,
+      upColor: up.trim(),
+      downColor: down.trim(),
+      borderUpColor: borderUp.trim(),
+      borderDownColor: borderDown.trim(),
+      wickUpColor: wickUp.trim(),
+      wickDownColor: wickDown.trim(),
       priceFormat: {
         type: 'custom',
         formatter: (price: number) => price.toFixed(4),
       },
     });
 
-    // Subscribe to bar data.
-    const barsSub = this.chartDataService.getModelBars(this.pair, 2000).subscribe(
-      (data: any) => {
-        if (Array.isArray(data)) {
-          this.candleSeries?.setData(
-            data.map(d => ({
-              time: this.convertTimestamp(d.time),
-              open: d.open,
-              high: d.high,
-              low: d.low,
-              close: d.close,
-            }))
-          );
-        } else {
-          console.warn(`Unexpected bars data format for pair=${this.pair}:`, data);
+    this.subscribeBars();
+    this.subscribePredictions();
+  }
+
+  /**
+   * ResizeObserver keeps the chart responsive inside flex/grid layouts.
+   */
+  private observeResize(): void {
+    const container = this.chartElement.nativeElement as HTMLElement;
+    const ro = new ResizeObserver(() => {
+      this.chart?.resize(container.clientWidth, container.clientHeight);
+    });
+    ro.observe(container);
+  }
+
+  // ---------------------------------------------------------------------------
+  //  DATA SUBSCRIPTIONS
+  // ---------------------------------------------------------------------------
+
+  private subscribeBars(): void {
+    const barsSub = this.chartDataService.getModelBars(this.pair, 2000).subscribe({
+      next: (data) => {
+        if (!Array.isArray(data)) {
+          console.warn(`[Chart] Unexpected bars for ${this.pair}:`, data);
+          return;
         }
+        this.candleSeries?.setData(
+          data.map((d) => ({
+            time: this.toUtc(d.time),
+            open: d.open,
+            high: d.high,
+            low: d.low,
+            close: d.close,
+          }))
+        );
       },
-      error => console.error(`Error loading bars for pair=${this.pair}:`, error)
-    );
+      error: (err) => console.error(`[Chart] Bars error for ${this.pair}:`, err),
+    });
     this.subscriptions.add(barsSub);
+  }
 
-    // Subscribe to prediction data.
-    const predictionSub = this.chartDataService.getPrediction(this.pair).subscribe(
-      (seriesArray: any[]) => {
+  private subscribePredictions(): void {
+    const predSub = this.chartDataService.getPrediction(this.pair).subscribe({
+      next: (seriesArr) => this.updatePredictionSeries(seriesArr),
+      error: (err) => console.error(`[Chart] Prediction error for ${this.pair}:`, err),
+    });
+    this.subscriptions.add(predSub);
+  }
 
-        // Remove any existing prediction series.
-        this.predictionSeries.forEach(series => this.chart?.removeSeries(series));
-        this.predictionSeries = [];
+  // ---------------------------------------------------------------------------
+  //  HELPERS
+  // ---------------------------------------------------------------------------
 
-        // Optionally, interpolate each series to fill gaps until the target resolution.
-        const interpolatedSeries = seriesArray.map(series =>
-          this.interpolatePredictionSeries(series, this.TARGET_INTERVAL_SECONDS)
-        );
+  /**
+   * Draw the prediction lines without modifying (interpolating) incoming data.
+   */
+  private updatePredictionSeries(
+    seriesArr: { time: number; y_hat: number }[][]
+  ): void {
+    // Clear old series
+    this.predictionSeries.forEach((s) => this.chart?.removeSeries(s));
+    this.predictionSeries = [];
 
-        // Compute mean prediction of each series.
-        const means = interpolatedSeries.map(series =>
-          series.reduce((sum: number, point: any) => sum + point.y_hat, 0) / series.length
-        );
-        const minMean = Math.min(...means);
-        const maxMean = Math.max(...means);
-
-        // Create a new line series for each prediction series.
-        interpolatedSeries.forEach((series, index) => {
-          let color = '#2196f3'; // default blue
-          if (means[index] === maxMean) {
-            color = 'green';
-          } else if (means[index] === minMean) {
-            color = 'red';
-          }
-          const newSeries = this.chart!.addLineSeries({
-            color: color,
-            lineWidth: 2,
-          });
-          const formattedData = series.map((d: any) => ({
-            time: this.convertTimestamp(d.time),
-            value: d.y_hat,
-          }));
-          newSeries.setData(formattedData);
-          this.predictionSeries.push(newSeries);
-        });
-      },
-      error => console.error(`Error loading predictions for pair=${this.pair}:`, error)
+    // Determine colouring based on mean value of each prediction series
+    const means = seriesArr.map(
+      (s) => s.reduce((sum, p) => sum + p.y_hat, 0) / s.length
     );
-    this.subscriptions.add(predictionSub);
+    const minMean = Math.min(...means);
+    const maxMean = Math.max(...means);
+
+    seriesArr.forEach((series, idx) => {
+      let color = '#2196f3'; // default blue
+      if (means[idx] === maxMean) color = 'green';
+      else if (means[idx] === minMean) color = 'red';
+
+      const line = this.chart!.addLineSeries({ color, lineWidth: 2 });
+      line.setData(
+        series.map((p) => ({
+          time: this.toUtc(p.time),
+          value: p.y_hat,
+        }))
+      );
+      this.predictionSeries.push(line);
+    });
   }
 
   /**
-   * Helper: Interpolates a prediction series to the target interval (in seconds).
-   * Uses linear interpolation between consecutive points.
+   * Lightweight Charts expects seconds since UNIX epoch (UTC).
+   * Accepts ms or s and applies optional offset.
    */
-  private interpolatePredictionSeries(
-    series: { time: number, y_hat: number }[],
-    targetIntervalSeconds: number
-  ): { time: number, y_hat: number }[] {
-    if (series.length < 2) {
-      return series;
-    }
-    const interpolated: { time: number, y_hat: number }[] = [];
-    for (let i = 0; i < series.length - 1; i++) {
-      const pointA = series[i];
-      const pointB = series[i + 1];
-      interpolated.push(pointA);
-      const gap = pointB.time - pointA.time;
-      // Calculate how many additional points to generate.
-      const numExtra = Math.floor(gap / targetIntervalSeconds) - 1;
-      for (let j = 1; j <= numExtra; j++) {
-        const interpTime = pointA.time + j * targetIntervalSeconds;
-        const fraction = (interpTime - pointA.time) / gap;
-        const interpY = pointA.y_hat + fraction * (pointB.y_hat - pointA.y_hat);
-        interpolated.push({ time: interpTime, y_hat: interpY });
-      }
-    }
-    // Append the last point.
-    interpolated.push(series[series.length - 1]);
-    // Ensure sorted order.
-    interpolated.sort((a, b) => a.time - b.time);
-    return interpolated;
-  }
-
-  /**
-   * Convert a given timestamp (in seconds or ms) to a UTCTimestamp recognized by LightweightCharts.
-   * Applies TIME_OFFSET_SECONDS if needed.
-   */
-  private convertTimestamp(ts: number): UTCTimestamp {
-    let adjustedTs = ts;
-    // If the timestamp is in milliseconds, convert to seconds.
-    if (ts > 1e10) {
-      adjustedTs = Math.floor(ts / 1000);
-    }
-    adjustedTs += this.TIME_OFFSET_SECONDS;
-    return adjustedTs as UTCTimestamp;
+  private toUtc(ts: number): UTCTimestamp {
+    const seconds = ts > 1e10 ? Math.floor(ts / 1000) : ts; // convert ms → s if needed
+    return (seconds + this.TIME_OFFSET_SECONDS) as UTCTimestamp;
   }
 }
