@@ -15,13 +15,9 @@ export class WebSocketService {
 
   connect(pair: string): void {
     const wsUrl = `${environment.apiUrlWs}/${pair}`;
-    console.log(`[WebSocketService] Connecting to: ${wsUrl}`);
     this.websocket = new WebSocket(wsUrl);
 
     this.websocket.onopen = () => {
-      console.log(
-        `[WebSocketService] Connected to WebSocket for pair: ${pair}`
-      );
       this.reconnectAttempts = 0; // Reset reconnect attempts
     };
 
@@ -55,9 +51,6 @@ export class WebSocketService {
   private reconnect(pair: string): void {
     if (this.reconnectAttempts < this.maxReconnectAttempts) {
       this.reconnectAttempts++;
-      console.log(
-        `[WebSocketService] Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})...`
-      );
       setTimeout(() => {
         this.connect(pair);
       }, this.reconnectInterval);
@@ -78,7 +71,6 @@ export class WebSocketService {
 
   disconnect(): void {
     if (this.websocket) {
-      console.log('[WebSocketService] Disconnecting WebSocket...');
       this.websocket.close();
       this.websocket = undefined;
     }

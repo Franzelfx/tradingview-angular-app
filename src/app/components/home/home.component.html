@@ -1,35 +1,25 @@
-<!-- src/app.component.html -->
+<app-header
+  [isDarkMode]="isDarkMode"
+  [isSidebarVisible]="isSidebarVisible"
+  (toggleSidebarEvent)="onToggleSidebar()">
+</app-header>
 
-<!-- Header Component -->
-<header>
-  <app-header 
-    [isDarkMode]="isDarkMode" 
-    [isSidebarVisible]="isSidebarVisible"
-    (toggleDarkModeEvent)="toggleDarkMode($event)"
-    (toggleSidebarEvent)="toggleSidebar()">
-  </app-header>
-</header>
-
-<!-- Main Container -->
-<main class="container">
-  <!-- Sidebar Component -->
-  <app-sidebar 
-    [pairs]="pairs" 
+<div class="container">
+  <app-sidebar
+    [pairs]="availablePairs"
     [selectedPairs]="selectedPairs"
-    (togglePairSelection)="togglePairSelection($event)"
-    [isSidebarVisible]="isSidebarVisible"
-    [class.hidden]="!isSidebarVisible">
+    [ngClass]="{'hidden': !isSidebarVisible}"
+    (togglePairSelection)="togglePair($event)"
+    (transitionend)="onSidebarTransitionEnd($event)"
+  >
   </app-sidebar>
 
-  <!-- Main Content Area -->
-  <div class="main-content">
-    <!-- Chart Components in the same order as the sidebar -->
-    <ng-container *ngFor="let pair of pairs">
-      <app-chart 
-        *ngIf="selectedPairs.includes(pair)"
-        [pair]="pair" 
-        [isDarkMode]="isDarkMode">
-      </app-chart>
-    </ng-container>
+  <div
+    class="main-content"
+    [ngStyle]="{'grid-template-rows': getGridTemplateRows()}"
+  >
+    <div *ngFor="let pair of selectedPairs">
+      <app-chart [pair]="pair"></app-chart>
+    </div>
   </div>
-</main>
+</div>

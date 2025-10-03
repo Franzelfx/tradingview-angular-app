@@ -1,79 +1,45 @@
-/* src/styles.css */
-
-/* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
-@import '~@angular/material/prebuilt-themes/indigo-pink.css';
-
-/* Define CSS Variables for Dark Theme as Default */
 :root {
-    /* Dark Theme Colors */
-    --color-background: #121212;
-    --color-text: #e0e0e0;
-    --color-header-bg: #2c2c2c;
-    --color-header-text: #ffffff;
-    /* Sidebar Colors */
-    --color-sidebar-bg: #3c3c3c;
-    --color-sidebar-text: #e0e0e0;
-    --color-sidebar-hover: #555;
-    --color-main-bg: #1e1e1e;
-    --color-main-text: #e0e0e0;
-    --color-chart-bg: #2c2c2c;
-    --color-chart-border: #555;
-    --color-button-hover: #4caf50;
-    /* Sidebar Width Variables */
-    --sidebar-width: 150px;
-    --sidebar-width-medium: 130px;
-    --sidebar-width-small: 100px;
+    /* Existing variables */
+    --purple: #690690;
+    --green: #069069;
+    --light-green: #90ee90;
+    --dark-green: #006400;
+    --yellow: #999900;
+    --red: #960420;
+    --blue: #420ffe;
+    --dark-red: #420420;
+    --white: #ffeffe;
+    --grey: #666666;
+    --black: #000000;
 
-    /* Gradient Variables for Dark Theme */
-    --login-bg-gradient: linear-gradient(90deg,
-            #1e1e1e 0%,
-            #555555 37%,
-            rgba(0, 212, 255, 1) 94%);
-}
+    /* Global Colors */
+    --background: var(--black);
+    --text-color: var(--white);
+    --color-header-bg: var(--blue);
+    --color-header-text: var(--white);
 
-/* Define CSS Variables for Light Theme under a class */
-body.light-mode {
-    /* Light Theme Colors */
-    --color-background: #f5f5f5;
-    --color-text: #333333;
-    --color-header-bg: #f5f5f5;
-    --color-header-text: #333333;
-    /* Sidebar Colors */
-    --color-sidebar-bg: #f0f0f0;
-    --color-sidebar-text: #333333;
-    --color-sidebar-hover: #ddd;
-    --color-main-bg: #ffffff;
-    --color-main-text: #333333;
-    --color-chart-bg: #fafafa;
-    --color-chart-border: #ccc;
-    --color-button-hover: #4caf50;
-    /* Sidebar Width Variables for Light Mode */
-    --sidebar-width: 150px;
-    --sidebar-width-medium: 130px;
-    --sidebar-width-small: 100px;
+    /* Chart Colors */
+    --color-chart-bg: var(--black);
+    --color-chart-frame: var(--white);
+    --color-chart-text: var(--white);
+    --color-grid-lines: #555;
 
-    /* Gradient Variables for Light Theme */
-    --login-bg-gradient: linear-gradient(90deg,
-            #002438 0%,
-            #340979 37%,
-            rgba(0, 212, 255, 1) 94%);
-}
+    /* Candlestick Colors */
+    --chart-candle-up-color: #4caf50;
+    --chart-candle-down-color: #f44336;
+    --chart-candle-border-up-color: #4caf50;
+    --chart-candle-border-down-color: #f44336;
+    --chart-candle-wick-up-color: #4caf50;
+    --chart-candle-wick-down-color: #f44336;
 
-/* Global Styles */
-*,
-::after,
-::before {
-    box-sizing: border-box;
+    /* Gradient for the overlay background */
+    --login-bg-gradient: linear-gradient(90deg, var(--purple) 0%, var(--blue) 100%);
 }
 
 body {
-    font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
-    background-color: var(--color-background);
-    color: var(--color-text);
-    transition: background-color 0.3s ease, color 0.3s ease;
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--background);
+    color: var(--text-color);
 }
-
-/* Additional global styles here */

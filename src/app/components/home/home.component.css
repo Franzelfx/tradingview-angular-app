@@ -1,69 +1,75 @@
-/* Ensure the html, body, and app-root take full height */
 html,
 body,
 app-root {
-    height: 100%;
+    height: 100vh;
     margin: 0;
-    display: flex;
-    flex-direction: column;
+    padding: 0;
 }
 
-/* Header Styles */
-header {
+/* Fixed header at top (6vh) */
+.header {
+    height: 6vh;
     position: fixed;
     top: 0;
-    width: 100%;
-    height: 60px;
-    z-index: 10;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    background-color: var(--color-header-bg);
+    color: var(--color-header-text);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-app-header {
-    height: 100%;
-    width: 100%;
-    background-color: #fff;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-}
-
-/* Main container holding sidebar and main content */
+/* Container below header */
 .container {
+    margin-top: 6vh;
+    height: calc(100vh - 6vh);
     display: flex;
     flex-direction: row;
-    height: calc(100vh - 60px);
-    /* Adjusts for header height */
-    margin-top: 60px;
-    /* Pushes down to avoid header overlap */
-    width: 100%;
-    transition: all 0.3s ease;
+    overflow: hidden;
+    /* no container-level scroll */
 }
 
-/* Sidebar Styles */
+/* Sidebar: 
+   - flex-shrink: 0 => won't shrink
+   - transition: width => triggers transitionend event
+*/
 app-sidebar {
-    width: 150px;
-    /* Default sidebar width */
+    width: 7em;
     flex-shrink: 0;
-    /* Prevents the sidebar from shrinking */
-    transition: width 0.3s ease;
+    transition: width 0.3s ease, padding 0.3s ease;
     overflow: hidden;
 }
 
 app-sidebar.hidden {
     width: 0;
     padding: 0;
-    /* Remove padding when hidden */
-    box-shadow: none;
-    /* Remove shadow when hidden */
 }
 
-/* Main Content Styles */
+/* Main content: 
+   - flex:1 => fill leftover horizontal space
+   - min-width:0 => allow shrinking
+   - display:grid => for chart layout
+   - overflow-y:auto => single vertical scrollbar
+*/
 .main-content {
-    flex-grow: 1;
-    padding: 20px;
+    display: grid;
+    gap: 16px;
+    padding: 1rem;
+    height: 100%;
     overflow-y: auto;
-    transition: all 0.3s ease;
+    min-width: 0;
+    flex: 1 1 auto;
+    transition: padding 0.3s ease;
 }
 
-/* Optional: Styling adjustments for body and content responsiveness */
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
+/* 
+   Direct children => each row
+   We'll define 'grid-template-rows' in the template with repeat(N,1fr).
+*/
+.main-content>div {
+    transition: all 0.5s ease;
 }

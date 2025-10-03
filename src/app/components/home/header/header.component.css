@@ -1,18 +1,17 @@
-/* src/app/components/header/header.component.css */
-
+/* Header Component Styles */
 .header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 20px;
-    background-color: var(--color-header-bg);
-    color: var(--color-header-text);
+    height: 7vh;
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    height: 60px;
-    z-index: 1000;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 20px;
+    background-color: var(--color-header-bg);
+    color: var(--color-header-text);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     transition: background-color 0.3s ease, color 0.3s ease;
 }
@@ -20,7 +19,7 @@
 .icon-button {
     background: none;
     border: none;
-    font-size: 20px;
+    font-size: 25px;
     color: inherit;
     cursor: pointer;
     display: flex;
@@ -36,88 +35,30 @@
     transform: scale(1.2);
 }
 
-/* Logo Styling */
 .logo-container {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.logo {
-    width: 150px;
-    height: auto;
-    max-height: 60px;
-    transition: opacity 0.3s ease;
-}
-
-/* Dark Mode Toggle Switch */
-.switch-container {
-    display: flex;
-    align-items: center;
-}
-
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 50px;
-    height: 28px;
-}
-
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
     position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: 0.4s;
-    border-radius: 28px;
+    left: 50%;
+    transform: translateX(-50%);
 }
 
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 22px;
-    width: 22px;
-    left: 3px;
-    bottom: 3px;
-    background-color: white;
-    transition: 0.4s;
-    border-radius: 50%;
+.ascii-art {
+    font-family: monospace;
+    font-size: 8px;
+    color: var(--color-header-text);
+    padding-top: 10px;
+    line-height: 1;
 }
 
-input:checked+.slider {
-    background-color: var(--color-button-hover);
-}
-
-input:focus+.slider {
-    box-shadow: 0 0 1px var(--color-button-hover);
-}
-
-input:checked+.slider:before {
-    transform: translateX(22px);
-}
-
-/* Logout Button Styling */
 .logout-button {
     background: none;
-    border: none;
+    border: 2px solid var(--color-header-text);
     font-size: 16px;
     color: var(--color-header-text);
     cursor: pointer;
     padding: 5px 10px;
-    margin-left: auto;
     display: flex;
     align-items: center;
-    transition: color 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .logout-button i {
@@ -125,5 +66,7 @@ input:checked+.slider:before {
 }
 
 .logout-button:hover {
-    color: var(--color-button-hover);
+    background-color: var(--green);
+    border-color: var(--green);
+    color: var(--color-header-text);
 }

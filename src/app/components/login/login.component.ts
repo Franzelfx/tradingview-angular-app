@@ -60,7 +60,6 @@ export class LoginComponent implements OnInit {
       try {
         // Dynamically resolve Auth0Service
         this.auth0Service = this.injector.get('Auth0Service');
-        console.log('Auth0Service initialized:', this.auth0Service);
       } catch (error) {
         console.error('Error initializing Auth0Service:', error);
       }
@@ -73,7 +72,6 @@ export class LoginComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.queryParams.subscribe((params) => {
-      console.log('Query params:', params); // Log the query params for debugging
 
       this.isSignUp = params['signUp'] === 'true';
       this.isPasswordReset = params['reset'] === 'true';
@@ -83,10 +81,8 @@ export class LoginComponent implements OnInit {
       this.clearMessages();
 
       if (params['token'] && !params['reset']) {
-        console.log('Handling email verification...');
         this.handleEmailVerification(params['token']);
       } else if (params['token'] && params['reset']) {
-        console.log('Handling password reset...');
         this.isPasswordResetConfirm = true;
         this.resetToken = params['token'];
       }
@@ -110,10 +106,6 @@ export class LoginComponent implements OnInit {
     this.isPasswordReset = false;
     this.isPasswordResetConfirm = false;
     this.clearMessages();
-    // Log the state of the form in the URL
-    console.log('Sign-up form displayed');
-    // Remove or comment out the navigation
-    // this.router.navigate([], { queryParams: { signUp: true } });
   }
 
   // Toggle to Password Reset form
@@ -231,7 +223,6 @@ export class LoginComponent implements OnInit {
   async handleEmailVerification(token: string): Promise<void> {
     try {
       const result = await this.authService.verifyEmail(token);
-      console.log('Verification result:', result); // Log the response for debugging
 
       if (result?.message === 'Email verified successfully') {
         this.verificationError = '';

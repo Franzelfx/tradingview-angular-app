@@ -36,7 +36,7 @@
           [(ngModel)]="password"
           name="password"
         />
-        <a (click)="onForgotPassword()" style="cursor: pointer;">Forgot your password?</a>
+        <a class="forgot-link" (click)="onForgotPassword()">Forgot your password?</a>
         <button [disabled]="signInForm.invalid">Sign In</button>
         <div *ngIf="loginError" class="error">
           {{ loginError }}

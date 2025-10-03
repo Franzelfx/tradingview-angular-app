@@ -4,29 +4,23 @@
     (click)="onToggleSidebar()" 
     class="icon-button" 
     aria-label="Toggle Sidebar">
-    <i
+    <i 
       class="fas"
       [ngClass]="isSidebarVisible ? 'fa-chevron-left' : 'fa-chevron-right'"
       aria-hidden="true">
     </i>
   </button>
 
-  <!-- Logo in the Center -->
+  <!-- ASCII Art Logo in the Center -->
   <div class="logo-container">
-    <img src="assets/logo.svg" alt="Logo" class="logo">
-  </div>
-
-  <!-- Dark Mode Toggle Switch -->
-  <div class="switch-container">
-    <label class="switch">
-      <input
-        type="checkbox"
-        [checked]="isDarkMode"
-        (change)="onToggleDarkMode($event)"
-        aria-label="Toggle Dark Mode"
-      />
-      <span class="slider round"></span>
-    </label>
+    <pre class="ascii-art">
+███████╗███████╗███████╗
+██╔════╝██╔════╝██╔════╝
+█████╗  █████╗  █████╗  
+██╔══╝  ██╔══╝  ██╔══╝  
+██║     ██║     ███████╗
+╚═╝     ╚═╝     ╚══════╝
+    </pre>
   </div>
 
   <!-- Logout Button with Icon -->

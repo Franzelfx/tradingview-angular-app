@@ -1,302 +1,208 @@
-// src/app/components/chart/chart.component.ts
-
 import {
   Component,
   Input,
-  OnInit,
-  OnDestroy,
   AfterViewInit,
-  Renderer2,
+  OnDestroy,
   ViewChild,
   ElementRef,
+  HostListener,
 } from '@angular/core';
 import { ChartDataService } from '../../../services/chart-data.service';
 import * as LightweightCharts from 'lightweight-charts';
 import { Subscription } from 'rxjs';
 import { UTCTimestamp } from 'lightweight-charts';
-import { MatDialog } from '@angular/material/dialog';
-import { ExecutionLogComponent } from './execution-log/execution-log.component';
 
 @Component({
   selector: 'app-chart',
   templateUrl: './chart.component.html',
   styleUrls: ['./chart.component.css'],
 })
-export class ChartComponent implements OnInit, AfterViewInit, OnDestroy {
-  @Input() pair: string = '';
-  @Input() isDarkMode: boolean = false;
+export class ChartComponent implements AfterViewInit, OnDestroy {
+  @Input() pair: string = 'EURUSD';
 
-  @ViewChild('chart', { static: false }) chartElement!: ElementRef;
+  @ViewChild('chart', { static: false }) private chartElement!: ElementRef;
 
-  private chart: LightweightCharts.IChartApi | undefined;
-  private candleSeries: LightweightCharts.ISeriesApi<'Candlestick'> | undefined;
-  private lineSeries: LightweightCharts.ISeriesApi<'Line'> | undefined;
-  private subscriptions: Subscription = new Subscription();
-  private resizeObserver: ResizeObserver | undefined;
-  private isInferenceRunning: boolean = false;
-
-  constructor(
-    private chartDataService: ChartDataService,
-    private renderer: Renderer2,
-    private dialog: MatDialog
-  ) {}
-
-  ngOnInit(): void {
-    console.log('ChartComponent initialized with pair:', this.pair);
+  @HostListener('window:resize')
+  onWindowResize(): void {
+    const chartContainer = this.chartElement?.nativeElement as HTMLElement;
+    this.chart?.resize(chartContainer.clientWidth, chartContainer.clientHeight);
   }
 
+  private chart?: LightweightCharts.IChartApi;
+  private candleSeries?: LightweightCharts.ISeriesApi<'Candlestick'>;
+  private predictionSeries: LightweightCharts.ISeriesApi<'Line'>[] = [];
+  private readonly subscriptions = new Subscription();
+
+  /**
+   * Allows shifting the time axis, e.g., when backend timestamps are not UTC.
+   * Keep at 0 unless you need an offset.
+   */
+  private readonly TIME_OFFSET_SECONDS = 0;
+
+  constructor(private readonly chartDataService: ChartDataService) { }
+
+  // ---------------------------------------------------------------------------
+  //  LIFECYCLE
+  // ---------------------------------------------------------------------------
+
   ngAfterViewInit(): void {
-    console.log(
-      'ChartComponent view initialized, starting chart setup for pair:',
-      this.pair
-    );
-    this.initializeChart();
+    this.initChart();
+    this.observeResize();
   }
 
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
-    if (this.chart) {
-      this.chart.remove();
-    }
-    if (this.resizeObserver) {
-      this.resizeObserver.disconnect();
-    }
+    this.predictionSeries.forEach((series) => this.chart?.removeSeries(series));
+    if (this.candleSeries) this.chart?.removeSeries(this.candleSeries);
+    this.chart?.remove();
   }
 
-  initializeChart(): void {
-    const chartContainer = this.chartElement.nativeElement as HTMLElement;
-    if (!chartContainer) return;
+  // ---------------------------------------------------------------------------
+  //  INITIALISATION
+  // ---------------------------------------------------------------------------
 
-    // Chart initialization logic
-    this.chart = LightweightCharts.createChart(chartContainer, {
-      width: chartContainer.clientWidth,
-      height: chartContainer.clientHeight,
+  /**
+   * Create the Price Chart and add the required series.
+   */
+  private initChart(): void {
+    const container = this.chartElement.nativeElement as HTMLElement;
+    if (!container) return;
+
+    const {
+      '--color-chart-bg': chartBg = '#000',
+      '--color-chart-text': chartText = '#fff',
+      '--color-grid-lines': grid = '#555',
+      '--chart-candle-up-color': up = 'lime',
+      '--chart-candle-down-color': down = 'red',
+      '--chart-candle-border-up-color': borderUp = 'lime',
+      '--chart-candle-border-down-color': borderDown = 'red',
+      '--chart-candle-wick-up-color': wickUp = 'lime',
+      '--chart-candle-wick-down-color': wickDown = 'red',
+    } = getComputedStyle(document.documentElement) as unknown as Record<string, string>;
+
+    // --- Chart instance ------------------------------------------------------
+    this.chart = LightweightCharts.createChart(container, {
+      width: container.clientWidth,
+      height: container.clientHeight,
       layout: {
-        background: {
-          type: LightweightCharts.ColorType.Solid,
-          color: this.isDarkMode ? '#2c2c2c' : '#fafafa',
-        },
-        textColor: this.isDarkMode ? '#e0e0e0' : '#333333',
+        background: { type: LightweightCharts.ColorType.Solid, color: chartBg.trim() },
+        textColor: chartText.trim(),
       },
       grid: {
-        vertLines: {
-          color: this.isDarkMode ? '#555' : 'rgba(197, 203, 206, 0.5)',
-        },
-        horzLines: {
-          color: this.isDarkMode ? '#555' : 'rgba(197, 203, 206, 0.5)',
-        },
+        vertLines: { color: grid.trim() },
+        horzLines: { color: grid.trim() },
       },
-      crosshair: {
-        mode: LightweightCharts.CrosshairMode.Normal,
-      },
-      rightPriceScale: {
-        borderColor: this.isDarkMode ? '#555' : 'rgba(197, 203, 206, 0.8)',
-      },
-      timeScale: {
-        borderColor: this.isDarkMode ? '#555' : 'rgba(197, 203, 206, 0.8)',
-        timeVisible: true,
-      },
+      crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+      rightPriceScale: { borderColor: grid.trim() },
+      timeScale: { borderColor: grid.trim(), timeVisible: true },
     });
 
-    // Add Candlestick Series
+    // --- Candlesticks --------------------------------------------------------
     this.candleSeries = this.chart.addCandlestickSeries({
-      upColor: '#4caf50',
-      downColor: '#f44336',
-      borderDownColor: '#f44336',
-      borderUpColor: '#4caf50',
-      wickDownColor: '#f44336',
-      wickUpColor: '#4caf50',
+      upColor: up.trim(),
+      downColor: down.trim(),
+      borderUpColor: borderUp.trim(),
+      borderDownColor: borderDown.trim(),
+      wickUpColor: wickUp.trim(),
+      wickDownColor: wickDown.trim(),
       priceFormat: {
         type: 'custom',
-        formatter: (price: any) => price.toFixed(4),
+        formatter: (price: number) => price.toFixed(4),
       },
     });
 
-    // Add Line Series for Predictions
-    this.lineSeries = this.chart.addLineSeries({
-      color: '#2196f3',
-      lineWidth: 2,
+    this.subscribeBars();
+    this.subscribePredictions();
+  }
+
+  /**
+   * ResizeObserver keeps the chart responsive inside flex/grid layouts.
+   */
+  private observeResize(): void {
+    const container = this.chartElement.nativeElement as HTMLElement;
+    const ro = new ResizeObserver(() => {
+      this.chart?.resize(container.clientWidth, container.clientHeight);
     });
+    ro.observe(container);
+  }
 
-    // Fetch and set candlestick data
-    const barsSub = this.chartDataService
-      .getModelBars(this.pair, 2000)
-      .subscribe(
-        (data: any) => {
-          console.log(`Model bars data for ${this.pair}:`, data);
-          if (Array.isArray(data)) {
-            this.candleSeries?.setData(
-              data.map((d: any) => ({
-                time: this.convertTimestamp(d.time), // Converted and typed time
-                open: d.open,
-                high: d.high,
-                low: d.low,
-                close: d.close,
-              }))
-            );
-          } else {
-            console.warn(`Unexpected bars data format for ${this.pair}:`, data);
-          }
-        },
-        (error: any) => {
-          console.error(`Error loading model bars for ${this.pair}:`, error);
+  // ---------------------------------------------------------------------------
+  //  DATA SUBSCRIPTIONS
+  // ---------------------------------------------------------------------------
+
+  private subscribeBars(): void {
+    const barsSub = this.chartDataService.getModelBars(this.pair, 2000).subscribe({
+      next: (data) => {
+        if (!Array.isArray(data)) {
+          console.warn(`[Chart] Unexpected bars for ${this.pair}:`, data);
+          return;
         }
-      );
-
-    // Fetch and set prediction data
-    const predictionSub = this.chartDataService
-      .getPrediction(this.pair)
-      .subscribe(
-        (predictionData: any) => {
-          console.log(`Prediction data for ${this.pair}:`, predictionData);
-          if (Array.isArray(predictionData)) {
-            this.lineSeries?.setData(
-              predictionData.map((d: any) => ({
-                time: this.convertTimestamp(d.time), // Converted and typed time
-                value: d.close,
-              }))
-            );
-          } else {
-            console.warn(
-              `Unexpected prediction data format for ${this.pair}:`,
-              predictionData
-            );
-          }
-        },
-        (error: any) => {
-          console.error(
-            `Error loading prediction data for ${this.pair}:`,
-            error
-          );
-        }
-      );
-
-    // Fetch and set confidence markers
-    const confidenceSub = this.chartDataService
-      .getConfidences(this.pair)
-      .subscribe(
-        (confidenceData: any) => {
-          console.log(`Confidence data for ${this.pair}:`, confidenceData);
-          if (Array.isArray(confidenceData) && confidenceData.length > 0) {
-            const markers: LightweightCharts.SeriesMarker<UTCTimestamp>[] =
-              confidenceData.map((confidence: any) => ({
-                time: this.convertTimestamp(confidence.t),
-                position: 'belowBar' as LightweightCharts.SeriesMarkerPosition,
-                color: this.isDarkMode ? 'white' : 'black',
-                shape: 'circle' as LightweightCharts.SeriesMarkerShape,
-                text: confidence.value.toString(),
-              }));
-            this.candleSeries?.setMarkers(markers);
-          } else {
-            console.warn(
-              `Unexpected confidence data format or empty data for ${this.pair}:`,
-              confidenceData
-            );
-          }
-        },
-        (error: any) => {
-          console.error(
-            `Error loading confidence data for ${this.pair}:`,
-            error
-          );
-        }
-      );
-
+        this.candleSeries?.setData(
+          data.map((d) => ({
+            time: this.toUtc(d.time),
+            open: d.open,
+            high: d.high,
+            low: d.low,
+            close: d.close,
+          }))
+        );
+      },
+      error: (err) => console.error(`[Chart] Bars error for ${this.pair}:`, err),
+    });
     this.subscriptions.add(barsSub);
-    this.subscriptions.add(predictionSub);
-    this.subscriptions.add(confidenceSub);
+  }
 
-    // Add the label and button to the chart
-    this.addOverlayElements();
-
-    // Initialize ResizeObserver for responsiveness
-    this.resizeObserver = new ResizeObserver(() => {
-      if (this.chart && this.chartElement) {
-        const container = this.chartElement.nativeElement as HTMLElement;
-        this.chart.applyOptions({
-          width: container.clientWidth,
-          height: container.clientHeight,
-        });
-      }
+  private subscribePredictions(): void {
+    const predSub = this.chartDataService.getPrediction(this.pair).subscribe({
+      next: (seriesArr) => this.updatePredictionSeries(seriesArr),
+      error: (err) => console.error(`[Chart] Prediction error for ${this.pair}:`, err),
     });
-
-    this.resizeObserver.observe(this.chartElement.nativeElement);
+    this.subscriptions.add(predSub);
   }
 
-  /**
-   * Adds the pair name label and the "Run Inference" button inside the chart.
-   */
-  addOverlayElements(): void {
-    const chartContainer = this.chartElement.nativeElement as HTMLElement;
-
-    // Create a container for the overlay elements
-    const overlayContainer = this.renderer.createElement('div');
-    this.renderer.addClass(overlayContainer, 'chart-overlay');
-
-    // Create the label element
-    const labelElement = this.renderer.createElement('div');
-    this.renderer.addClass(labelElement, 'chart-pair-name');
-    const labelText = this.renderer.createText(this.pair);
-    this.renderer.appendChild(labelElement, labelText);
-
-    // Create the button element
-    const buttonElement = this.renderer.createElement('button');
-    this.renderer.addClass(buttonElement, 'inference-button');
-    const buttonText = this.renderer.createText('Run Inference');
-    this.renderer.appendChild(buttonElement, buttonText);
-    this.renderer.listen(buttonElement, 'click', () => this.onInference());
-
-    // Append label and button to the overlay container
-    this.renderer.appendChild(overlayContainer, labelElement);
-    this.renderer.appendChild(overlayContainer, buttonElement);
-
-    // Append the overlay container to the chart container
-    this.renderer.appendChild(chartContainer, overlayContainer);
-  }
+  // ---------------------------------------------------------------------------
+  //  HELPERS
+  // ---------------------------------------------------------------------------
 
   /**
-   * Triggers the inference endpoint and opens the execution log dialog.
+   * Draw the prediction lines without modifying (interpolating) incoming data.
    */
-  onInference(): void {
-    if (this.isInferenceRunning) {
-      // Inference is already running, just re-open the execution log dialog
-      this.dialog.open(ExecutionLogComponent, {
-        width: '600px',
-        height: '500px',
-        data: { pair: this.pair }, // Pass the pair to the dialog
-      });
-    } else {
-      // Set the flag
-      this.isInferenceRunning = true;
-      // Trigger the inference endpoint with the correct pair
-      this.chartDataService.triggerInference(this.pair).subscribe(
-        (response) => {
-          console.log('Inference triggered successfully:', response);
-          // Open the execution log dialog with the pair data
-          this.dialog.open(ExecutionLogComponent, {
-            width: '600px',
-            height: '500px',
-            data: { pair: this.pair }, // Pass the pair to the dialog
-          });
-        },
-        (error) => {
-          console.error('Error triggering inference:', error);
-          this.isInferenceRunning = false;
-        }
+  private updatePredictionSeries(
+    seriesArr: { time: number; y_hat: number }[][]
+  ): void {
+    // Clear old series
+    this.predictionSeries.forEach((s) => this.chart?.removeSeries(s));
+    this.predictionSeries = [];
+
+    // Determine colouring based on mean value of each prediction series
+    const means = seriesArr.map(
+      (s) => s.reduce((sum, p) => sum + p.y_hat, 0) / s.length
+    );
+    const minMean = Math.min(...means);
+    const maxMean = Math.max(...means);
+
+    seriesArr.forEach((series, idx) => {
+      let color = '#2196f3'; // default blue
+      if (means[idx] === maxMean) color = 'green';
+      else if (means[idx] === minMean) color = 'red';
+
+      const line = this.chart!.addLineSeries({ color, lineWidth: 2 });
+      line.setData(
+        series.map((p) => ({
+          time: this.toUtc(p.time),
+          value: p.y_hat,
+        }))
       );
-    }
+      this.predictionSeries.push(line);
+    });
   }
 
   /**
-   * Converts a timestamp to UTCTimestamp, handling milliseconds if necessary.
-   * @param ts - The timestamp to convert.
-   * @returns The converted UTCTimestamp.
+   * Lightweight Charts expects seconds since UNIX epoch (UTC).
+   * Accepts ms or s and applies optional offset.
    */
-  convertTimestamp = (ts: number): UTCTimestamp => {
-    // Check if the timestamp is in milliseconds (e.g., length > 10)
-    if (ts > 1e10) {
-      return Math.floor(ts / 1000) as UTCTimestamp;
-    }
-    return ts as UTCTimestamp;
-  };
+  private toUtc(ts: number): UTCTimestamp {
+    const seconds = ts > 1e10 ? Math.floor(ts / 1000) : ts; // convert ms → s if needed
+    return (seconds + this.TIME_OFFSET_SECONDS) as UTCTimestamp;
+  }
 }
